@@ -8,6 +8,28 @@ Morbi condimentum, tortor et tincidunt ullamcorper, sem quam pretium nulla, id
 convallis lectus libero nec turpis. Proin dapibus nisi id est sodales nec
 ultrices tortor pellentesque.
 
+$$ x_t = e^{(a-\sigma^2/2)t+W_t} + \int_0^t e^{(a-\sigma^2/2)(t-s)+(W_t-W_s)}\,ds$$
+
+$$ \ln x = \int_{-\infty}^x \frac 1 y \, dy  $$
+
+$$\begin{align*}
+x &= \int dW\\
+&=xy
+\end{align*}$$
+
+Let $x$ be a variable from $a$ to $b-3f$
+
+```python
+def hello(x):
+    print("Hello,", x)
+```
+
+```javascript
+const hello = (x) => {
+    console.log("Hello,", x)
+}
+```
+
 Vivamus vel nisi ac lacus sollicitudin vulputate
 ac ut ligula. Nullam feugiat risus eget eros gravida in molestie sapien euismod.
 Nunc sed hendrerit orci. Nulla mollis consequat lorem ac blandit. Ut et turpis

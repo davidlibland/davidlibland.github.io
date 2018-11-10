@@ -20,6 +20,7 @@ cabal.project.local
 cabal.project.local~
 .HTF/
 .ghc.environment.*
+.DS_Store
 
 # Hakyll
 _cache/
