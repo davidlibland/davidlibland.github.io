@@ -9,7 +9,8 @@ import           Text.Pandoc.Options
 
 pandocMathCompiler =
     let mathExtensions = [Ext_tex_math_dollars, Ext_tex_math_double_backslash,
-                          Ext_latex_macros]
+                          Ext_latex_macros, Ext_inline_code_attributes,
+                          Ext_footnotes]
         defaultExtensions = writerExtensions defaultHakyllWriterOptions
         newExtensions = foldr enableExtension defaultExtensions mathExtensions
         writerOptions = defaultHakyllWriterOptions {
