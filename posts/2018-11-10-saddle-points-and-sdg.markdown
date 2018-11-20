@@ -144,50 +144,95 @@ Let's consider the seperate components
 Let's start by considering the attractive noise in isolation, ie. $\Delta x = \xi x$. The corresponding update is
 $$x_{n+1}=x_n + \xi x_n = (1+\xi) x_{n}$$
 
-Suppose that $\xi$ equals either $-\sigma$ or $\sigma$ with equal probability. Then after 1 iteration, $x$ is rescaled by either a factor of $1-\sigma$ or $1+\sigma$ (with equal probability):
+Suppose that we flip a coin at each iteration and $\xi$ equals $\sigma$ if we
+ get heads or 
+$-\sigma$ if we roll tails. Then after 1 iteration, $x$
+ is 
+rescaled by either a factor of $1-\sigma$ or $1+\sigma$ (with equal probability):
 
-![](../images/saddle-points-and-sdg/stage_1.jpeg)
-Next consider what the possiblilities are after two iterations: $x$ is rescaled by a factor of either
-- $(1-\sigma)^
+![The possible transitions](../images/saddle-points-and-sdg/stage_1_scr.jpeg)
 
-![Stage 2](../images/saddle-points-and-sdg/stage_2.jpeg)
+Next, consider what the possiblilities are after two iterations: $x$ is rescaled
+ by a factor of either
+ 
+1. $(1-\sigma)^2$ if we roll two tails (with probably 
+$\frac{1}{4}=\frac{1}{2}\times 
+\frac{1}{2}$)
+2. $(1-\sigma^2)=(1-\sigma)(1+\sigma)$ in two distinct ways: we roll either a 
+heads and then a tails or vice versa (with total probability $\frac{1}{2} = 
+2\times(\frac{1}{2}\times \frac{1}{2})$)
+3. $(1+\sigma)^2$ if we roll two tails (with probably 
+  $\frac{1}{4}=\frac{1}{2}\times 
+  \frac{1}{2}$)
 
-![Stage 3](../images/saddle-points-and-sdg/stage_4.jpeg)
+Since the first two scaling factors are both less than one, $\lvert 
+x_2\rvert<\lvert x_0\rvert$ with probability $\frac{3}{4}$.[^average_scale]
 
-![Stage N](../images/saddle-points-and-sdg/stage_n.png)
+[^average_scale]: On the other hand, the average value of the scaling factors
+ is 1. Indeed the expected value of $x_n$ is $x_0$ for all $n$.
+
+![The possible 2-step transitions](../images/saddle-points-and-sdg/stage_2_scr.jpeg)
+
+Continuing like this we see that $\lvert x_4\rvert<\lvert x_0\rvert$ with 
+probability at least $\frac{11}{16}$.[^average_scale]
+
+![The possible 4-step transitions](../images/saddle-points-and-sdg/stage_4_scr.jpeg)
+
+In fact, we have $\lim_{n\to\infty} x_n = 0$ with probability 1. The figure
+below illustrates this trend for larger and larger $n$.
+
+![With $\sigma=0.1$, we sample $x_n$ (at $n=10, 20, 100, 1000$); those $x_n$ 
+with $\lvert x_n\rvert\<\lvert x_0\rvert$ are colored red, while the rest are colored blue.](../images/saddle-points-and-sdg/stage_n.png)
 
 
 # Diffusive noise:
 Recall:
     $$ \Delta x =
     \overset{\text{Usual gradient}}{\overbrace{\pm ax}} 
-    +\overset{\text{Attractive noise}}{\overbrace{\xi x}}+\overset{\text{Diffusive noise}}{\overbrace{\eta}}$$
+    +\overset{\text{Attractive noise}}{\overbrace{\xi x}}+
+    \overset{\text{Diffusive noise}}{\overbrace{\eta}}$$
     
 So the diffusive component is:
     $$ \Delta x = \eta$$
     
-At stage $N$, we have
+After $N$ iterations, we have
 $$x_N=x_0+\sum_{n=0}^N \Delta x_n = x_0+\sum_{i=0}^N \eta_i$$
 
-But $\eta_i$ are iid random variables with mean zero and norm $\tau$, so $\sum_{i=0}^N \eta_i\sim N(0, \sqrt{N}\tau)$. Therefore:
+But $\eta_i$ are iid random variables with mean zero and norm $\tau$, so 
+$\sum_{i=0}^N \eta_i\sim N(0, \tau\sqrt{N})$. Therefore:
 
 $$x_N\sim N(x_0, \tau\sqrt{N})$$
 
 In summary, $x$ diffuses at a rate of $\tau\sqrt{N}$.
 
 ## Does the diffusive or attractive noise dominate?
+Consider again the model for stochastic gradient descent localized around a 
+saddle 
+point:
 
 $$ \Delta x =
     \overset{\text{Usual gradient}}{\overbrace{\pm ax}} 
-    +\overset{\text{Attractive noise}}{\overbrace{\xi x}}+\overset{\text{Diffusive noise}}{\overbrace{\eta}}$$
+    +\overset{\text{Attractive noise}}{\overbrace{\xi x}}
+    +\overset{\text{Diffusive noise}}{\overbrace{\eta}}$$
     
-#### Replace with a stochastic differential equation:
+Since the intensity of the attractive noise is proportional to $x$, it's clear
+that the attractive noise dominates the behavior for sufficiently large values
+ of $x$, while the diffusive noise dominates the behavior for sufficiently 
+ small values of $x$.
+
+This describes the behavior at the two extremes. However, further direct 
+analysis of the behavior is hampered by our not knowing anything about the 
+random variables $\xi$ or $\eta$. Fortunately, if we assume they have finite
+ moments, rescaled sums of independent draws of $\xi$ and $\eta$ limit to 
+ brownian motion, and it makes sense to replace the finite difference 
+equation above with the corresponding stochastic differential equation
 
 $$dx = ax \:dt+\xi x \:dt +\eta\: dt$$
 where $\xi$ and $\eta$ are white noise.
 
 Let $\sigma$ and $\tau$ represent the scaling factors such that 
-$W_t=\int_0^t\frac{\xi}{\sigma}\:dt$ and $V_t=\int_0^t\frac{\eta}{\tau}\:dt$ are standard brownian motion. Then
+$W_t=\int_0^t\frac{\xi}{\sigma}\:dt$ and $V_t=\int_0^t\frac{\eta}{\tau}\:dt$ are 
+standard brownian motion. Then we may write the equation as
 
 $$dx = ax \:dt+\sigma x \:dW +\tau\: dV$$
 
@@ -203,21 +248,36 @@ $$x_t = -\tau/\sigma+(x_0+\tau/\sigma)e^{(a-\sigma^2/2)t+\sigma W_t}-\frac{a\tau
 
 $$x_t = -\tau/\sigma+(x_0+\tau/\sigma)e^{(a-\sigma^2/2)t+\sigma W_t}-\frac{a\tau}{\sigma}\int_0^t e^{(a-\sigma^2/2)(t-s)+\sigma (W_t-W_s)}ds$$
 
-We see that the effective rate of growth is $a-\sigma^2/2$
-- this rate depends only on the intensity of the attractive noise.
-    - It is independent of the intensity of the diffusive noise.
-- In particular, if the noise $\sigma$ is sufficiently strong, the saddle point will be attractive.
+We see that the effective rate of growth is $a-\sigma^2/2$.
+Note that this rate depends only on the intensity of the attractive noise, and 
+not on the intensity of the diffusive noise; which is consistent with our 
+earlier observation that the attractive noise dominates the large scale 
+behavior. In particular, if the noise $\sigma$ is sufficiently strong, the 
+saddle point will be attractive.
 
 ## Stationary distribution:
 
-$$\lim_{t\to \infty} -x_t-\tau/\sigma$$ 
-is inverse-gamma distributed with scale $\beta = 2\frac{\lvert a\tau\rvert}{\sigma^3}$ and shape $\alpha = 1-2a/\sigma^2$
+In fact, it can be shown that $x_t$ limits to a stationary distribution:
+
+$$\lim_{t\to \infty} x_t = -(\gamma^{-1}+\tau/\sigma)$$ 
+where $\gamma$ is a Gamma-distributed random variable with scale 
+$\beta = 2\frac{\lvert a\tau\rvert}{\sigma^3}$ and shape 
+$\alpha = 1-2a/\sigma^2$.
+
+Note that this distribution is non integrable, which is to say the expected 
+value of $\lim_{t\to \infty} x_t$ is infinite. However, that is misleading: 
+the expected value is dominated by a minority of trajectories which escape 
+very far very quickly.[^stock_market] Indeed the mode is at 
+$\frac{-\tau\sigma}{\sigma^2-a}$.
+
+[^stock_market]: Note that this differential equation is used to model stocks.
+Consequently, one should expect most stocks to fail, but a small minority - 
+which grow exponentially - will dominate the statistics of the overall market 
+(at least in so far as the model is valid).
+
+![The stationary distribtion when $a=1$, $\sigma=2$ and $\tau=-2$.](../images/saddle-points-and-sdg/correlated.png)
 
 
-
-This has no mean, but it's mode is at $-\tau/\sigma+\beta/(\alpha+1)= -\tau/\sigma-\frac{a\tau}{\sigma^3-a\sigma}$
-
-![Inverse Gamma](../images/saddle-points-and-sdg/correlated.png)
 
 ## Case 2: $\xi$ and $\eta$ are *not* correlated
 In this case, $\eta$ serves to time-average the solution

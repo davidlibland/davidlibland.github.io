@@ -23,6 +23,13 @@ pandocMathCompiler =
     
 main :: IO ()
 main = hakyll $ do
+
+    -- Move favicon to root
+    match "images/favicon.ico" $ do
+        route $ constRoute "favicon.ico"
+        compile copyFileCompiler
+
+
     match "images/**" $ do
         route   idRoute
         compile copyFileCompiler
