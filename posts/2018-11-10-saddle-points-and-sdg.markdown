@@ -121,23 +121,33 @@ What is going on here? How can noise cause gradient descent to become trapped at
 - Open questions-->
 
 ## Why noise hurts
+To simplify our discussion, we will restrict ourselves to one of the principal
+axes of the saddle point in which case the local model becomes one dimensional:
+$$f(x)= ax^2$$
+here $a$ is positive along a convex principal axis and negative along a 
+concave principal axis. The corresponding local model for the noisy loss 
+function is:
+$$f(x)=(a+\xi)x^2 + \eta x$$
+where $\xi$ and $\eta$ are mean zero random variables encoding the noisy 
+measurement of the coefficients of $x^2$ and $x$ in the Taylor expansion.
 
-The local model for a saddle point in a noisy loss function is:
+<!-- The local model for a saddle point in a noisy loss function is:
 $$f(x_1,\dots,x_n) = \overset{concave}
 {\overbrace{\frac{-a_1-\xi_1}{2}x_1^2+\dots +\frac{-a_k-\xi_k}{2}x_k^2}}
 + \overset{convex}{\overbrace{\frac{a_{k+1}-\xi_{k+1}}{2}x_{k+1}^2+\dots+\frac{a_m-\xi_m}{2}x_m^2}}\\
 -\eta_1x_1-\cdots-\eta_mx_m
 $$
-where $\xi_i$ and $\eta_i$ are mean zero random variables encoding the noisy measurement of each coefficient.
+where $\xi_i$ and $\eta_i$ are mean zero random variables encoding the noisy 
+measurement of each coefficient. -->
 
 So, we have 
-$$\frac{\partial f}{\partial x_i} = \pm a_ix_i +\xi_ix_i+\eta_i$$
+$$\frac{\partial f}{\partial x} = ax +\xi x+\eta$$
 And the gradient descent update becomes:
-$$\Delta x_i =\pm a_i x_i+ \xi_i x_i+\eta_i$$
+$$\Delta x =a x+ \xi x+\eta$$
 
 Let's consider the seperate components
     $$ \Delta x =
-    \overset{\text{Usual gradient}}{\overbrace{\pm ax}} 
+    \overset{\text{Usual gradient}}{\overbrace{ax}} 
     +\overset{\text{Attractive noise}}{\overbrace{\xi x}}+\overset{\text{Diffusive noise}}{\overbrace{\eta}}$$
 
 ## Attractive noise:
@@ -178,11 +188,18 @@ probability at least $\frac{11}{16}$.[^average_scale]
 
 ![The possible 4-step transitions](../images/saddle-points-and-sdg/stage_4_scr.jpeg)
 
+Indeed we see that the mode of $x_n$ - for which we expect an equal number of 
+heads and tails, namely $n/2$ - is 
+$$(1-\sigma)^{n/2}(1+\sigma)^{n/2}x_0=(1-\sigma^2)^{n/2}x_0,$$
+and it gravitates towards zero at an average rate of 
+$$\frac{1}{n}(-\sigma^2\frac{n}{2})=-\frac{\sigma^2}{2}.$$
+
 In fact, we have $\lim_{n\to\infty} x_n = 0$ with probability 1. The figure
 below illustrates this trend for larger and larger $n$.
 
 ![With $\sigma=0.1$, we sample $x_n$ (at $n=10, 20, 100, 1000$); those $x_n$ 
-with $\lvert x_n\rvert\<\lvert x_0\rvert$ are colored red, while the rest are colored blue.](../images/saddle-points-and-sdg/stage_n.png)
+with $\lvert x_n\rvert \leq\lvert x_0\rvert$ are colored red, while the rest 
+are colored blue.](../images/saddle-points-and-sdg/stage_n.png)
 
 
 # Diffusive noise:
@@ -211,7 +228,7 @@ saddle
 point:
 
 $$ \Delta x =
-    \overset{\text{Usual gradient}}{\overbrace{\pm ax}} 
+    \overset{\text{Usual gradient}}{\overbrace{ax}} 
     +\overset{\text{Attractive noise}}{\overbrace{\xi x}}
     +\overset{\text{Diffusive noise}}{\overbrace{\eta}}$$
     
@@ -224,17 +241,55 @@ This describes the behavior at the two extremes. However, further direct
 analysis of the behavior is hampered by our not knowing anything about the 
 random variables $\xi$ or $\eta$. Fortunately, if we assume they have finite
  moments, rescaled sums of independent draws of $\xi$ and $\eta$ limit to 
- brownian motion, and it makes sense to replace the finite difference 
+ Brownian motion, and it makes sense to replace the finite difference 
 equation above with the corresponding stochastic differential equation
 
 $$dx = ax \:dt+\xi x \:dt +\eta\: dt$$
-where $\xi$ and $\eta$ are white noise.
+where $\xi$ and $\eta$ are white noise whose correlation is time-independant.
 
 Let $\sigma$ and $\tau$ represent the scaling factors such that 
 $W_t=\int_0^t\frac{\xi}{\sigma}\:dt$ and $V_t=\int_0^t\frac{\eta}{\tau}\:dt$ are 
-standard brownian motion. Then we may write the equation as
+standard Brownian motion, and let $\rho$ denote their correlation.[^brownian] 
+Then we may write the equation as
 
-$$dx = ax \:dt+\sigma x \:dW +\tau\: dV$$
+[^brownian]: So for any times $t$ and $s$, the variances are $\mathbb{E}
+\big((W_t-W_s)^2\big)=(t-s)$, 
+and $\mathbb{E}\big((U_t-U_s)^2\big)=(t-s)$, while the correlation is 
+$\mathbb{E}\big((W_t-W_s)(U_t-U_s)\big) = \rho(t-s)$.
+
+$$dx = ax \:dt+\sigma x \:dW +\tau\: dU$$
+
+Substituting 
+\begin{align}
+\mu &= \frac{\tau\rho}{\sigma}, &
+\omega &= \tau\sqrt{1-\rho^2}, \text{ and }\\
+V &= \frac{U-\rho W}{\sqrt{1-\rho^2}} & y&=x+\mu
+\end{align}
+yields the stochastic differential equation
+$$dy  = a(y-\mu)\:dt +\sigma y\:dW+\omega\: dV$$
+where $V$ and $W$ are independant standard Brownian motions.
+
+This equation has the following analytical solution:
+
+$$y_t = y_0e^{(a-\frac{\sigma^2}{2})t+\sigma W_t}+\int_0^t e^{
+(a-\frac{\sigma^2}{2})(t-s)+\sigma (W_t-W_s)}d\nu$$
+where $\nu = \omega V_s-a\mu s$, as can be verified directly by differentiation
+(using [Ito's lemma](https://en.wikipedia.org/wiki/It%C3%B4%27s_lemma)).
+
+In particular, we see that the attractive noise shifts the rate of 
+exponential growth from $a$ to $a-\frac{\sigma^2}{2}$.[^same_rate] Indeed, if 
+there is no
+diffusive noise (i.e. $\tau=0$), the solution reduces to 
+$x_t = x_0e^{(a-\frac{\sigma^2}{2})t+\sigma W_t}$, which almost surely converges
+ to zero.
+ 
+[^same_rate]: Note that $-\frac{\sigma^2}{2}$ is the same convergence rate that 
+appeared in the discrete case.
+
+## Stationary distribution:
+
+If $a< \frac{\sigma^2}{2}$, then $\lim_{t\to\infty}x_t$ converges to a 
+stationary distribution
 
 ## Case 1: $\xi$ and $\eta$ are correlated
 
