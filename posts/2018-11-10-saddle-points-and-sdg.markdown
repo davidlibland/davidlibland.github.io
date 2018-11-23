@@ -1,47 +1,73 @@
 ---
 title: Saddle Points and Stochastic Gradient Descent
 ---
-Essentially all machine learning models are trained using gradient descent. However, neural networks introduce two new challenges for gradient descent to cope with: saddle points and massive training sets. In this post we describe how these two challenges conspire together to create deadly traps, and we discuss means to escape them.
+Essentially all machine learning models are trained using gradient descent. 
+However, neural networks introduce two new challenges for gradient descent to 
+cope with: saddle points and massive training sets. In this post we describe 
+how these two challenges conspire together to create deadly traps, and we 
+discuss means to escape them.
 
 ## Background: Optimizing a loss function:
-Machine learning algorithms attempt to model observed data in order to predict properties about unobserved data, and in most cases they do this by:
+Machine learning algorithms attempt to model observed data in order to predict 
+properties about unobserved data, and in most cases they do this by:
 
-1. Parametrizing a space of models (with some parameters $\vec{\bf{x}} = (x_1,\dots, x_m)$),
-2. Defining a loss function $f(\vec{\bf{x}})\to \mathbb{R}$ which measures the total error between the model at parameters $\vec{\bf{x}} = (x_1,\dots, x_m)$ and the observed data,
-3. Finding the optimal parameters $\vec{\bf{x}} = (x_1,\dots, x_m)$  which minimize the loss.
+1. Parametrizing a space of models (with some parameters 
+$\vec{\bf{x}} = (x_1,\dots, x_m)$),
+2. Defining a loss function $f(\vec{\bf{x}})\to \mathbb{R}$ which measures the 
+total error between the model at parameters $\vec{\bf{x}} = (x_1,\dots, x_m)$ 
+and the observed data,
+3. Finding the optimal parameters $\vec{\bf{x}} = (x_1,\dots, x_m)$  which 
+minimize the loss.
 
-Assuming we've completed steps (1) and (2), the question then becomes: How do we minimize a high dimensional function $f(\vec{\bf{x}})\to \mathbb{R}$?
+Assuming we've completed steps (1) and (2), the question then becomes: How do 
+we minimize a high dimensional function $f(\vec{\bf{x}})\to \mathbb{R}$?
 
 <!--![Loss Function](../images/saddle-points-and-sdg/loss_function.png)-->
 
 ## We use gradient descent:
-Although there are many possible ways to minimize a function, by and far the most successful approach for machine learning is to use gradient descent. This is a greedy algorithm, where we make an initial first guess $\vec{\bf{x}}_0$ for the optimal parameters, and then iteratively modifying that guess by moving in the direction in which $f$ decreases most quickly, that is:
+Although there are many possible ways to minimize a function, by and far the 
+most successful approach for machine learning is to use gradient descent. This 
+is a greedy algorithm, where we make an initial first guess $\vec{\bf{x}}_0$ 
+for the optimal parameters, and then iteratively modifying that guess by moving 
+in the direction in which $f$ decreases most quickly, that is:
 
 $$\vec{\bf{x}}_n = \vec{\bf{x}}_{n-1} - \nabla f$$
 
-(where $\nabla f$ denotes the gradient of $f$). With some basic assumptions, the sequence of guesses $\vec{\bf{x}}_0, \vec{\bf{x}}_1, \vec{\bf{x}}_2, \vec{\bf{x}}_3, \dots$ can be shown to improve steadily, and if $f$ is sufficently nice (for example if $f$ is strongly convex), then this sequence will converge to a (local) minimum of $f$ fairly quickly.
+(where $\nabla f$ denotes the gradient of $f$). With some basic assumptions, 
+the sequence of guesses $\vec{\bf{x}}_0, \vec{\bf{x}}_1, \vec{\bf{x}}_2, \vec{\bf{x}}_3, \dots$ 
+can be shown to improve steadily, and if $f$ is sufficiently nice (for example 
+if $f$ is strongly convex), then this sequence will converge to a (local) 
+minimum of $f$ fairly quickly.
 
 ![Gradient Descent, pictured here by a red path starting from a poor initial choice for $\vec{\bf{x}}$ (where $f(\vec{\bf{x}})$ is large) converges fairly quickly to a local minimum.](../images/saddle-points-and-sdg/gradient_descent1.png)
 
 ## Saddle points
 We now introduce the first villain in our saga, saddle points, which are 
-known to cause problems for gradient descent. A saddle point is a critical point[^critical_point] of a function which is neither a local minima or maxima.
+known to cause problems for gradient descent. A saddle point is a critical 
+point[^critical_point] of a function which is neither a local minima or maxima.
 
 [^critical_point]: That is $\vec{\bf{x}}$ is a critical point if $\nabla f=0$
  at $\vec{\bf{x}}$. Said differently $f$ is flat to first order near $\vec{\bf{x}}$.
 
 ![The red and green curves intersect at a generic saddle point in two dimensions. Along the green curve the saddle point looks like a local minimum, while it looks like a local maximum along the red curve.](../images/saddle-points-and-sdg/saddle_point.png)
 
-Locally, up to a rotatation and translation, any function $f$ is well approximated near a saddle point by
+Locally, up to a rotation and translation, any function $f$ is well 
+approximated near a saddle point by
 
 $$\overset{concave}
 {\overbrace{\frac{-a_1}{2}x_1^2+\dots +\frac{-a_k}{2}x_k^2}}
 + \overset{convex}{\overbrace{\frac{a_{k+1}}{2}x_{k+1}^2+\dots+\frac{a_m}{2}x_m^2}}$$
 
-where $1<k<m$ and all $a_i>0$, and the translation sends the saddle point to the origin.
+where $1<k<m$ and all $a_i>0$, and the translation sends the saddle point to 
+the origin.
 
 #### Gradient descent proceeds extremely slowly near a saddle point. 
-Why? Well, $\nabla f=0$ at a saddle point $\vec{\bf{x}}$ so the gradient $\nabla f\simeq 0$ will be extremely small near the saddle point. Recall that each gradient descent update is given by $\vec{\bf{x}}_n = \vec{\bf{x}}_{n-1}- \nabla f$. So $\vec{\bf{x}}_n \simeq \vec{\bf{x}}_{n-1}$, and each update barely improves the current guess. You can see this quite clearly in the following picture:
+Why? Well, $\nabla f=0$ at a saddle point $\vec{\bf{x}}$ so the 
+gradient $\nabla f\simeq 0$ will be extremely small near the saddle point. 
+Recall that each gradient descent update is given by 
+$\vec{\bf{x}}_n = \vec{\bf{x}}_{n-1}- \nabla f$. So 
+$\vec{\bf{x}}_n \simeq \vec{\bf{x}}_{n-1}$, and each update barely improves 
+the current guess. You can see this quite clearly in the following picture:
 
 ![Gradient descent proceeds slowly near a saddle point, so the $\vec{\bf{x}}_n$ cluster more closely around the saddle points.](../images/saddle-points-and-sdg/gradient_descent2.png)
 
@@ -68,31 +94,44 @@ So:
 and
 $$\Delta x_i = -a_ix_i \quad \text{ for } i>k \quad \text{ (attractive dynamics)}$$
 
-Though we are attracted to the saddle point in some directions, we are eventually ejected from the saddle point by the repulsive forces.
+Though we are attracted to the saddle point in some directions, we are 
+eventually ejected from the saddle point by the repulsive forces.
 
-Finally, we should emphasize that there are **lots** of saddle points in deep neural networks.
+Finally, we should emphasize that there are **lots** of saddle points in deep 
+neural networks.
 
 ## Typically, the loss function in deep neural networks is noisy
-For most machine learning algorithms, the loss function can be written as a sum over the training data:
+For most machine learning algorithms, the loss function can be written as a 
+sum over the training data:
 
 $$ f(\vec{\bf{x}}) = \sum_j^N f_j(\vec{\bf{x}}),$$
 
-where $N$ is the number of training samples, and each $f_i(\vec{\bf{x}})$ measures the model's error on the $i$-th training  sample. 
+where $N$ is the number of training samples, and each $f_i(\vec{\bf{x}})$ 
+measures the model's error on the $i$-th training  sample. 
 <!--This allows us to compute the gradient $\nabla f$ as a sum of terms:
 $$ \nabla f(\vec{\bf{x}}) = \sum_j^N \nabla f_j(\vec{\bf{x}}).$$
 -->
-Now, deep neural networks need massive data sets to train successfully, and so it extremely costly to evaluate the loss over the entire training set. Instead, one typically approximates the loss on a randomly chosen minibatch $J\subset \{1,\dots, N\}$ of data, 
+Now, deep neural networks need massive data sets to train successfully, and so 
+it extremely costly to evaluate the loss over the entire training set. Instead, 
+one typically approximates the loss on a randomly chosen minibatch 
+$J\subset \{1,\dots, N\}$ of data, 
 $$ f_{J-approx}(\vec{\bf{x}}) = \sum_{j\in J} f_j(\vec{\bf{x}}).$$
 This subsampling from the training data results in a _noisy_ loss function.
 
-In turn, we modify the gradient descent algorithm as follows: on iteration, we choose a random minibatch $J\subset \{1,\dots, N\}$ and update our previous guess by:
+In turn, we modify the gradient descent algorithm as follows: on iteration, we 
+choose a random minibatch $J\subset \{1,\dots, N\}$ and update our previous 
+guess by:
 $$\vec{\bf{x}}_n = \vec{\bf{x}}_{n-1} +\Delta \vec{\bf{x}}_{n-1}, \quad \text{ where } \quad \Delta \vec{\bf{x}}= - \nabla f_{J-approx}$$
-It is worthwhile noting that minibatches chosen randomly at each iteration are mutually independent. The resulting algorithm is known as **stochastic gradient descent**.
+It is worthwhile noting that minibatches chosen randomly at each iteration are 
+mutually independent. The resulting algorithm is known as 
+**stochastic gradient descent**.
 
-Adding this noise, however, can have some suprising consequences near saddle points:
+Adding this noise, however, can have some surprising consequences near saddle 
+points:
 
 ## Example:
-Consider the following function, standard gradient descent does an excellent job of finding the minimum:
+Consider the following function, standard gradient descent does an excellent 
+job of finding the minimum:
 
 ![](../images/saddle-points-and-sdg/sdg_0noise.png)
 
@@ -112,7 +151,8 @@ normally distributed random variable with standard deviation 2.
 
 ![](../images/saddle-points-and-sdg/sdg_2noise.png)
 
-What is going on here? How can noise cause gradient descent to become trapped at saddle points?
+What is going on here? How can noise cause gradient descent to become trapped 
+at saddle points?
 
 
 <!--## Overview of talk:
@@ -121,13 +161,13 @@ What is going on here? How can noise cause gradient descent to become trapped at
 - Open questions-->
 
 ## Why noise hurts
-To simplify our discussion, we will restrict ourselves to one of the principal
-axes of the saddle point in which case the local model becomes one dimensional:
-$$f(x)= ax^2$$
-here $a$ is positive along a convex principal axis and negative along a 
-concave principal axis. The corresponding local model for the noisy loss 
-function is:
-$$f(x)=(a+\xi)x^2 + \eta x$$
+To simplify our discussion, we will restrict ourselves to one of the concave 
+down principal axes of the saddle point - along which the dynamics ought to be 
+repulsive -  in which case the local model becomes one dimensional:
+$$f(x)= -ax^2.$$
+with $a$ positive. The 
+corresponding local model for the noisy loss function is:
+$$f(x)=-(a+\xi)x^2 - \eta x$$
 where $\xi$ and $\eta$ are mean zero random variables encoding the noisy 
 measurement of the coefficients of $x^2$ and $x$ in the Taylor expansion.
 
@@ -141,17 +181,18 @@ where $\xi_i$ and $\eta_i$ are mean zero random variables encoding the noisy
 measurement of each coefficient. -->
 
 So, we have 
-$$\frac{\partial f}{\partial x} = ax +\xi x+\eta$$
+$$\frac{\partial f}{\partial x} = -ax -\xi x-\eta$$
 And the gradient descent update becomes:
 $$\Delta x =a x+ \xi x+\eta$$
 
-Let's consider the seperate components
+Let's consider the separate components
     $$ \Delta x =
     \overset{\text{Usual gradient}}{\overbrace{ax}} 
     +\overset{\text{Attractive noise}}{\overbrace{\xi x}}+\overset{\text{Diffusive noise}}{\overbrace{\eta}}$$
 
 ## Attractive noise:
-Let's start by considering the attractive noise in isolation, ie. $\Delta x = \xi x$. The corresponding update is
+Let's start by considering the attractive noise in isolation, ie. 
+$\Delta x = \xi x$. The corresponding update is
 $$x_{n+1}=x_n + \xi x_n = (1+\xi) x_{n}$$
 
 Suppose that we flip a coin at each iteration and $\xi$ equals $\sigma$ if we
@@ -224,8 +265,7 @@ In summary, $x$ diffuses at a rate of $\tau\sqrt{N}$.
 
 ## Does the diffusive or attractive noise dominate?
 Consider again the model for stochastic gradient descent localized around a 
-saddle 
-point:
+saddle point:
 
 $$ \Delta x =
     \overset{\text{Usual gradient}}{\overbrace{ax}} 
@@ -245,7 +285,7 @@ random variables $\xi$ or $\eta$. Fortunately, if we assume they have finite
 equation above with the corresponding stochastic differential equation
 
 $$dx = ax \:dt+\xi x \:dt +\eta\: dt$$
-where $\xi$ and $\eta$ are white noise whose correlation is time-independant.
+where $\xi$ and $\eta$ are white noise whose correlation is time-independent.
 
 Let $\sigma$ and $\tau$ represent the scaling factors such that 
 $W_t=\int_0^t\frac{\xi}{\sigma}\:dt$ and $V_t=\int_0^t\frac{\eta}{\tau}\:dt$ are 
@@ -267,7 +307,7 @@ V &= \frac{U-\rho W}{\sqrt{1-\rho^2}} & y&=x+\mu
 \end{align}
 yields the stochastic differential equation
 $$dy  = a(y-\mu)\:dt +\sigma y\:dW+\omega\: dV$$
-where $V$ and $W$ are independant standard Brownian motions.
+where $V$ and $W$ are independent standard Brownian motions.
 
 This equation has the following analytical solution:
 
@@ -277,9 +317,10 @@ where $\nu = \omega V_s-a\mu s$, as can be verified directly by differentiation
 (using [Ito's lemma](https://en.wikipedia.org/wiki/It%C3%B4%27s_lemma)).
 
 In particular, we see that the attractive noise shifts the rate of 
-exponential growth from $a$ to $a-\frac{\sigma^2}{2}$.[^same_rate] Indeed, if 
-there is no
-diffusive noise (i.e. $\tau=0$), the solution reduces to 
+exponential growth from $a$ to $a-\frac{\sigma^2}{2}$
+.[^same_rate] Thus, if $a< \frac{\sigma^2}{2}$, then the growth rate becomes 
+negative, namely the saddle point becomes attractive. Indeed, if 
+there is no diffusive noise (i.e. $\tau=0$), the solution reduces to 
 $x_t = x_0e^{(a-\frac{\sigma^2}{2})t+\sigma W_t}$, which almost surely converges
  to zero.
  
@@ -288,8 +329,38 @@ appeared in the discrete case.
 
 ## Stationary distribution:
 
+We would like to undestand the long term behaviour of $x_t$. 
 If $a< \frac{\sigma^2}{2}$, then $\lim_{t\to\infty}x_t$ converges to a 
-stationary distribution
+stationary distribution[^dufresne]. Solving the 
+[Fokker-Planck equation](https://en.wikipedia.org/wiki/Fokker%E2%80%93Planck_equation)[^FKE] 
+yields the following relative density for $\lim_{t\to\infty}x_t$:
+
+$$\left(y^{2} \sigma^{2} + \omega^{2}\right)^{\frac{a}{\sigma^{2}} - 1} 
+e^{- \frac{2 a \mu \operatorname{atan}{\left (\frac{y \sigma}{\omega} \right )}}
+{\omega \sigma}}$$
+
+[^dufresne]: Dufresne D. The distribution of a perpetuity, with applications to 
+risk theory and pension funding. Vol. 1990, Scandinavian Actuarial 
+Journal. 1990. p. 39–79. 
+[^FKE]: The Fokker-Planck equation says that the probability density $p(x, t)$ 
+solves the PDE 
+$${\frac {\partial }{\partial t}}p(y, t)=-{\frac 
+{\partial }{\partial y}}\left[A (y)p(y,t)\right]+{\frac {\partial 
+^{2}}{\partial y^{2}}}\left[D(y)p(y,t)\right],$$
+where $A(y) = a(y-\mu)$ and $D(y)=\frac{1}{2}(\sigma^2 y^2+\omega^2)$. For a 
+stationary distribution, the time derivative on the left-hand-side vanishes. 
+Thus, we have $\frac {\partial }{\partial y}J(y) = 0$, where $$J(y)=-A(y)p(y)
++\frac{\partial}{\partial y} [D(y)p(y)].$$
+So $J$ is constant; since both $p$ and $\frac {\partial p}{\partial t}$ 
+vanish at $\infty$, we must have $J(y)=0$, which yields the ODE:
+$$\frac{\partial}{\partial y} [D(y)p(y)]=A(y)p(y),$$
+which can be solved by standard techniques. From this equation, we also see
+that $\frac{\partial p(y)}{\partial y}=0$ when $0=A(y)-\frac{\partial D(y)
+}{\partial y}$, which leads to the linear equation $0= Y(a- \sigma^{2}) - a\mu$ 
+for the mode of $p$.
+
+Note that the mode of this distribution is $y = a\mu/(a-\sigma^2)$, which
+translates to $x=\frac{\rho \sigma \tau}{a - \sigma^{2}}$.
 
 ## Case 1: $\xi$ and $\eta$ are correlated
 
@@ -367,7 +438,8 @@ $$dx = ax \:dt+\xi x \:dt +\eta\: dt$$
 ### Problems:
 - This does not guarantee that we will escape, instead 
     - it increases the odds that we will escape, 
-    - it greatly speeds how quickly we pass through non-attractive saddle points (where the attractive noise is small).
+    - it greatly speeds how quickly we pass through non-attractive saddle 
+    points (where the attractive noise is small).
 
 
 ## Stochastic Variance Reduction Gradient Descent (SVRGD)
@@ -386,8 +458,11 @@ $\quad\quad\quad\quad$ set $x := x - \nabla f_{VR}$
     
     
 
-- Interestingly, SVRGD serves correlate the two noises $\xi$ and $\eta$ in the equation $$dx = ax \:dt+\xi x \:dt +\eta\: dt$$
-- Infact, at the end of every inner loop $x-x_*$ exhibits an inverse gamma distribution with scale proportionate to the distance from $x_*$ to the saddle point:
+- Interestingly, SVRGD serves correlate the two noises $\xi$ and $\eta$ in the 
+equation $$dx = ax \:dt+\xi x \:dt +\eta\: dt$$
+- Infact, at the end of every inner loop $x-x_*$ exhibits an inverse gamma 
+distribution with scale proportionate to the distance from $x_*$ to the saddle 
+point:
 
 
 ![SVRG](../images/saddle-points-and-sdg/svrg.png)
@@ -398,8 +473,10 @@ $\quad\quad\quad\quad$ set $x := x - \nabla f_{VR}$
 Infact, you expect to escape geometrically (in the outer loop)
 
 ### Problems:
-- Unfortuately, you may need to compute the full gradient (updating $x_*$) before each foolproof step away from the saddle point.
-- This results in the same computational cost as gradient descent (which is considered too expensive for training deep neural networks).
+- Unfortuately, you may need to compute the full gradient (updating $x_*$) 
+before each foolproof step away from the saddle point.
+- This results in the same computational cost as gradient descent (which is 
+considered too expensive for training deep neural networks).
 
 
 ## Increase the minibatch size
@@ -407,7 +484,8 @@ Infact, you expect to escape geometrically (in the outer loop)
 ### Idea:
 - Full batch Gradient Descent will never get stuck at a saddle point 
     - Why? It reduces the attactive noise to zero
-- Similarly, using large minibatches greatly decreases the odds of being stuck at a saddle point 
+- Similarly, using large minibatches greatly decreases the odds of being stuck 
+at a saddle point 
     - Why? It reduces the attactive noise
     
 ### Problems:
@@ -416,7 +494,8 @@ Infact, you expect to escape geometrically (in the outer loop)
 ## Decrease the learning rate
 
 ### Idea:
-Instead of making the updates $$x_n = x_{n-1} +\Delta x_{n-1},$$ make smaller updates: $$x_n = x_{n-1} +\rho \Delta x_{n-1}$$ (where $0<\rho<1$ is small).
+Instead of making the updates $$x_n = x_{n-1} +\Delta x_{n-1},$$ make smaller 
+updates: $$x_n = x_{n-1} +\rho \Delta x_{n-1}$$ (where $0<\rho<1$ is small).
 
 - This decreases the attractive noise by a factor of $\sqrt{\rho}$
 
@@ -453,4 +532,6 @@ $$p_n = \rho_0/n$$
         - Is it less likely in high dimensions?
     - How is it affected by depth vs width of the network?
 - How does momentum affect the dynamics?
-- Trade off between increasing batch size (reduces variance linearly) vs increasing network size (reduces odds of only bad directions, while also increasing number of saddle points).
+- Trade off between increasing batch size (reduces variance linearly) vs 
+increasing network size (reduces odds of only bad directions, while also 
+increasing number of saddle points).
