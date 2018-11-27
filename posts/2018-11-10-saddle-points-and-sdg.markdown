@@ -246,7 +246,7 @@ are colored blue.](../images/saddle-points-and-sdg/stage_n.png)
 # Diffusive noise:
 Recall:
     $$ \Delta x =
-    \overset{\text{Usual gradient}}{\overbrace{\pm ax}} 
+    \overset{\text{Usual gradient}}{\overbrace{ax}} 
     +\overset{\text{Attractive noise}}{\overbrace{\xi x}}+
     \overset{\text{Diffusive noise}}{\overbrace{\eta}}$$
     
@@ -331,11 +331,12 @@ appeared in the discrete case.
 
 We would like to undestand the long term behaviour of $x_t$. 
 If $a< \frac{\sigma^2}{2}$, then $\lim_{t\to\infty}x_t$ converges to a 
-stationary distribution[^dufresne]. Solving the 
+stationary distribution[^dufresne]. Solving the associated
 [Fokker-Planck equation](https://en.wikipedia.org/wiki/Fokker%E2%80%93Planck_equation)[^FKE] 
-yields the following relative density for $\lim_{t\to\infty}x_t$:
+yields the following relative density for $\lim_{t\to\infty}x_t$
 
-$$\left(y^{2} \sigma^{2} + \omega^{2}\right)^{\frac{a}{\sigma^{2}} - 1} 
+$$p(y)\propto\left(y^{2} \sigma^{2} + \omega^{2}\right)^{\frac{a}{\sigma^{2}} -
+ 1} 
 e^{- \frac{2 a \mu \operatorname{atan}{\left (\frac{y \sigma}{\omega} \right )}}
 {\omega \sigma}}$$
 
@@ -361,6 +362,8 @@ for the mode of $p$.
 
 Note that the mode of this distribution is $y = a\mu/(a-\sigma^2)$, which
 translates to $x=\frac{\rho \sigma \tau}{a - \sigma^{2}}$.
+
+![The stationary distribtions when $a=1$, and $\tau=-1$; for $(\sigma=2, \rho=0)$, $(\sigma=\sqrt{2}, \rho=0)$, and $(\sigma=2, \rho=.95)$, respectively.](../images/saddle-points-and-sdg/stat_dist.png)
 
 ## Case 1: $\xi$ and $\eta$ are correlated
 
