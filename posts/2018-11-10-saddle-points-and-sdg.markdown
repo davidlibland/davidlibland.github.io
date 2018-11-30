@@ -330,86 +330,58 @@ appeared in the discrete case.
 ## Stationary distribution:
 
 We would like to undestand the long term behaviour of $x_t$. 
-If $a< \frac{\sigma^2}{2}$, then $\lim_{t\to\infty}x_t$ converges to a 
-stationary distribution[^dufresne]. Solving the associated
-[Fokker-Planck equation](https://en.wikipedia.org/wiki/Fokker%E2%80%93Planck_equation)[^FKE] 
-yields the following relative density for $\lim_{t\to\infty}x_t$
+If $a< \frac{\sigma^2}{2}$, then $x_\infty:=\lim_{t\to\infty}x_t$ converges 
+to a stationary distribution[^dufresne]. We solve for the 
+stationary 
+distribution in the [appendix](#Appendix_A) and find that the random variable
+$x_\infty:=\lim_{t\to\infty}x_t$ is 
+[Pearson distributed](https://en.wikipedia.org/wiki/Pearson_distribution). 
+In particular, when $\omega \neq 0$, $y_\infty$ has 
+the following probability density: 
 
-$$p(y)\propto\left(y^{2} \sigma^{2} + \omega^{2}\right)^{\frac{a}{\sigma^{2}} -
- 1} 
+$$p(y_\infty)=\frac{1}{Z}\left(y^{2} \sigma^{2} + \omega^{2}\right)
+^{\frac{a}{\sigma^{2}} - 1} 
 e^{- \frac{2 a \mu \operatorname{atan}{\left (\frac{y \sigma}{\omega} \right )}}
-{\omega \sigma}}$$
+{\omega \sigma}}, \text{ where } x_\infty = y_\infty-\mu,$$
+where $Z$ is a normalizing constant (we will discuss the case where 
+$\omega=0$ in the next subsection).
+
+Note that the random variable $x_\infty$ is 
+non integrable, which is to say its expected value is infinite. However, we do
+not expect $x_t$ to diverge: for instance, for large $R$, the odds that 
+$\lvert \lim_{t\to\infty}x_t \rvert > R$ become negligibly small: 
+$$\mathbb{P}(\lvert \lim_{t\to\infty}x_t \rvert > R) = 
+O\big(\big(\frac{1}{R}\big)^{1-\frac{2a}{\sigma^{2}}}\big)\text{ as } R\to 
+\infty$$
 
 [^dufresne]: Dufresne D. The distribution of a perpetuity, with applications to 
 risk theory and pension funding. Vol. 1990, Scandinavian Actuarial 
-Journal. 1990. p. 39–79. 
-[^FKE]: The Fokker-Planck equation says that the probability density $p(x, t)$ 
-solves the PDE 
-$${\frac {\partial }{\partial t}}p(y, t)=-{\frac 
-{\partial }{\partial y}}\left[A (y)p(y,t)\right]+{\frac {\partial 
-^{2}}{\partial y^{2}}}\left[D(y)p(y,t)\right],$$
-where $A(y) = a(y-\mu)$ and $D(y)=\frac{1}{2}(\sigma^2 y^2+\omega^2)$. For a 
-stationary distribution, the time derivative on the left-hand-side vanishes. 
-Thus, we have $\frac {\partial }{\partial y}J(y) = 0$, where $$J(y)=-A(y)p(y)
-+\frac{\partial}{\partial y} [D(y)p(y)].$$
-So $J$ is constant; since both $p$ and $\frac {\partial p}{\partial t}$ 
-vanish at $\infty$, we must have $J(y)=0$, which yields the ODE:
-$$\frac{\partial}{\partial y} [D(y)p(y)]=A(y)p(y),$$
-which can be solved by standard techniques. From this equation, we also see
-that $\frac{\partial p(y)}{\partial y}=0$ when $0=A(y)-\frac{\partial D(y)
-}{\partial y}$, which leads to the linear equation $0= Y(a- \sigma^{2}) - a\mu$ 
-for the mode of $p$.
+Journal. 1990. p. 39–79.
 
-Note that the mode of this distribution is $y = a\mu/(a-\sigma^2)$, which
+Indeed, the mode of this distribution is at $y = a\mu/(a-\sigma^2)$, which
 translates to $x=\frac{\rho \sigma \tau}{a - \sigma^{2}}$.
 
-![The stationary distribtions when $a=1$, and $\tau=-1$; for $(\sigma=2, \rho=0)$, $(\sigma=\sqrt{2}, \rho=0)$, and $(\sigma=2, \rho=.95)$, respectively.](../images/saddle-points-and-sdg/stat_dist.png)
+![The stationary distributions when $a=1$, and $\tau=-1$; for $(\sigma=2, \rho=0)$, $(\sigma=\sqrt{2}, \rho=0)$, and $(\sigma=2, \rho=.95)$, respectively.](../images/saddle-points-and-sdg/stat_dist.png)
 
-## Case 1: $\xi$ and $\eta$ are correlated
+### Special Case 1: $\xi$ and $\eta$ are perfectly correlated
+The special case where $\omega=0$ corresponds to $\xi$ and $\eta$ being 
+perfectly correlated. In this case $y_\infty$ is 
+[Inverse Gamma-distributed](https://en.wikipedia.org/wiki/Inverse-gamma_distribution)[^dufresne]. 
+To describe the distribution of $x_\infty$, we may assume without loss of 
+generality that $\rho=1$. Then
+$x_\infty+\tau/\sigma$ is an
+[Inverse Gamma-distributed](https://en.wikipedia.org/wiki/Inverse-gamma_distribution) 
+random variable with scale $\beta = -2\frac{ a\tau}{\sigma^3}$ and 
+shape $\alpha = 1-2a/\sigma^2$.
 
-In this case we may assume $V = W$, so
-$$dx = ax \:dt+\sigma x \:dW +\tau\: dW$$
-Substituting $x = y-\tau/\sigma$, we get
-$$dy = a(y-\tau/\sigma) \:dt  + \sigma y \:dW$$
-
-This elimates the diffusive noise, replacing it by a constant rate of change of $-a\tau/\sigma$. We can solve this exactly, to get:
-$$x_t = -\tau/\sigma+(x_0+\tau/\sigma)e^{(a-\sigma^2/2)t+\sigma W_t}-\frac{a\tau}{\sigma}\int_0^t e^{(a-\sigma^2/2)(t-s)+\sigma (W_t-W_s)}ds$$
-
-$$x_t = -\tau/\sigma+(x_0+\tau/\sigma)e^{(a-\sigma^2/2)t+\sigma W_t}-\frac{a\tau}{\sigma}\int_0^t e^{(a-\sigma^2/2)(t-s)+\sigma (W_t-W_s)}ds$$
-
-We see that the effective rate of growth is $a-\sigma^2/2$.
-Note that this rate depends only on the intensity of the attractive noise, and 
-not on the intensity of the diffusive noise; which is consistent with our 
-earlier observation that the attractive noise dominates the large scale 
-behavior. In particular, if the noise $\sigma$ is sufficiently strong, the 
-saddle point will be attractive.
-
-## Stationary distribution:
-
-In fact, it can be shown that $x_t$ limits to a stationary distribution:
-
-$$\lim_{t\to \infty} x_t = -(\gamma^{-1}+\tau/\sigma)$$ 
-where $\gamma$ is a Gamma-distributed random variable with scale 
-$\beta = 2\frac{\lvert a\tau\rvert}{\sigma^3}$ and shape 
-$\alpha = 1-2a/\sigma^2$.
-
-Note that this distribution is non integrable, which is to say the expected 
-value of $\lim_{t\to \infty} x_t$ is infinite. However, that is misleading: 
-the expected value is dominated by a minority of trajectories which escape 
-very far very quickly.[^stock_market] Indeed the mode is at 
-$\frac{-\tau\sigma}{\sigma^2-a}$.
-
-[^stock_market]: Note that this differential equation is used to model stocks.
-Consequently, one should expect most stocks to fail, but a small minority - 
-which grow exponentially - will dominate the statistics of the overall market 
-(at least in so far as the model is valid).
-
-![The stationary distribtion when $a=1$, $\sigma=2$ and $\tau=-2$.](../images/saddle-points-and-sdg/correlated.png)
+### Special Case 2: $\xi$ and $\eta$ are *not* correlated
+In this case, $\rho=0$, and $x_\infty$
+is [Student's t-distributed](https://en.wikipedia.org/wiki/Student%27s_t-distribution)
+with $\nu =1-\frac{2a}{\sigma^2}$ degrees of freedom, location $\mu=0$, 
+and scale $\sqrt{\frac{\tau^2}{\sigma^2-2a}}$.
 
 
-
-## Case 2: $\xi$ and $\eta$ are *not* correlated
-In this case, $\eta$ serves to time-average the solution
+<!-- $\eta$ serves to time-average the solution
 $$\hat x_t=x_0e^{(a-\sigma^2/2)t+\sigma W_t}$$
 of the equation 
 $$d\hat x = a\hat x \:dt+\sigma \hat x \:dW$$
@@ -417,33 +389,47 @@ Explictly, we have
 $$x_t = x_0e^{(a-\sigma^2/2)t+\sigma W_t} + \int_0^te^{(a-\sigma^2/2)(t-s)+\sigma (W_t-W_s)}\eta \: ds$$
 
 
-![Log Normal mixture of gaussians](../images/saddle-points-and-sdg/uncorelated.png)
+![Log Normal mixture of gaussians](.
+./images/saddle-points-and-sdg/uncorelated.png) -->
 
 
 ## How should we escape saddle points in the presence of noise?
+We can categorize some major strategies as follows:
 
-We need to reduce the noise!
+- #### Increase the diffusive noise
+    - [Perturbed Stochastic Gradient Descent](#PSGD)
+- #### Decrease the attractive noise
+    - Increase the minibatch size
+    - Decrease/Anneal the learning rate
+    - Stochastic Variance Reduction Gradient Descent (SVRGD)
+- #### Do not use a smooth loss function
+    - Use ReLu's
 
-## Options
-- Perturbed Stochastic Gradient Descent
-- Stochastic Variance Reduction Gradient Descent (SVRGD)
-- Increase the minibatch size
-- Decrease the learning rate
-- Anneal the learning rate
-- Use ReLu's
+## Perturbed Stochastic Gradient Descent {#PSGD}
 
-## Perturbed Stochastic Gradient Descent
+Perturbed stochastic gradient descent[^psgd] effectively increases the 
+intensity $\tau$ of the diffusive noise in the equation 
+$$dx = ax \:dt+\sigma x \:dW +\tau\: dU$$ while keeping the 
+intensity $\sigma$ of the attractive noise as well as the deterministic 
+growth rate $a$ fixed. 
+In particular, $x_\infty$ remains Pearson  distributed. 
 
-### Idea: 
-Increase the intensity of the diffusive noise $\eta$ in the equation 
-$$dx = ax \:dt+\xi x \:dt +\eta\: dt$$
-
-### Problems:
-- This does not guarantee that we will escape, instead 
-    - it increases the odds that we will escape, 
-    - it greatly speeds how quickly we pass through non-attractive saddle 
-    points (where the attractive noise is small).
-
+Since the  scale of the distribution of $x_\infty$ depends linearly on $\tau$, 
+ it follows that $x_\infty$ will disperse proportionately. Thus, if we rescale 
+ $\tau$ by a factor of $\alpha$, then, intuitively, 
+ $\mathbb{P}(\lvert \lim_{t\to\infty}x_t \rvert < R)$
+ will scale on the order of $\frac{1}{\alpha}$. 
+ 
+ In a practical setting, the loss function will only be well approximated by 
+ the local saddle point model within a finite radius $R$ of the saddle point,
+ so the odds of being trapped there will decrease roughly by a factor of 
+ $\frac{1}{\alpha}$. Summarizing this heuristic analysis, Perturbed Stochastic
+ Gradient Descent should be an effective means of escaping saddle points in the 
+ setting of a noisy loss function.
+ 
+[^psgd]: Jin C, Ge R, Netrapalli P, Kakade SM, Jordan MI. How to Escape 
+Saddle Points Efficiently. 2017;1–35. 
+Available [here](http://arxiv.org/abs/1703.00887)
 
 ## Stochastic Variance Reduction Gradient Descent (SVRGD)
 ### Idea:
@@ -538,3 +524,33 @@ $$p_n = \rho_0/n$$
 - Trade off between increasing batch size (reduces variance linearly) vs 
 increasing network size (reduces odds of only bad directions, while also 
 increasing number of saddle points).
+
+## Appendix A: Solving for the stationary distribution  {#Appendix_A}
+The [Fokker-Planck equation](https://en.wikipedia.org/wiki/Fokker%E2%80%93Planck_equation)
+equation says that the probability density $p(y, t)$ to 
+the stochastic differential equation
+$$dy  = a(y-\mu)\:dt +\sigma y\:dW+\omega\: dV$$
+solves the PDE 
+$${\frac {\partial }{\partial t}}p(y, t)=-{\frac 
+{\partial }{\partial y}}\left[A (y)p(y,t)\right]+{\frac {\partial 
+^{2}}{\partial y^{2}}}\left[D(y)p(y,t)\right],$$
+where $A(y) = a(y-\mu)$ and $D(y)=\frac{1}{2}(\sigma^2 y^2+\omega^2)$. For a 
+stationary distribution, the time derivative on the left-hand-side vanishes. 
+Thus, we have $\frac {\partial }{\partial y}J(y) = 0$, where $$J(y)=-A(y)p(y)
++\frac{\partial}{\partial y} [D(y)p(y)].$$
+Since $J$ is constant and both $p$ and $\frac {\partial p}{\partial t}$ 
+vanish at $\infty$, we must have $J(y)=0$, which yields the ODE:
+$$\frac{\partial}{\partial y} [D(y)p(y)]=A(y)p(y).$$
+This, in turn, can be solved by standard techniques to find the solution
+ $$\left(y^{2} \sigma^{2} + \omega^{2}\right)
+ ^{\frac{a}{\sigma^{2}} - 1} 
+ e^{- \frac{2 a \mu \operatorname{atan}{\left (\frac{y \sigma}{\omega} \right )}}
+ {\omega \sigma}},$$
+ up to a constant multiple.
+ From the ODE, we also see
+that 
+$$A(y)-\frac{\partial D(y)}{\partial y} =0
+\quad\quad\Leftrightarrow\quad\quad
+\frac{\partial p(y)}{\partial y}=0,$$ 
+which leads to the linear equation $0= y(a- \sigma^{2}) - a\mu$ for the mode of 
+$p$.
