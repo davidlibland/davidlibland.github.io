@@ -577,14 +577,28 @@ saddle points. Of course, it would be worthwhile to investigate the situation
 ![Stochastic gradient descent near a piecewise linear saddle point.](../images/saddle-points-and-sdg/relu.png)
 
 ## Open questions
-- What are the odds of the attractive noise being significantly strong?
-    - How are these odds affected by the dimensionality?
-        - Is it less likely in high dimensions?
-    - How are these odds affected by the depth vs width of the network?
-- How does momentum affect the dynamics?
-- Trade off between increasing batch size (reduces variance linearly) vs 
-increasing network size (reduces odds of only bad directions, while also 
-increasing number of saddle points).
+In this post we examined the impact of noise on stochastic gradient descent 
+near saddle points by looking at the limiting $t\to\infty$ stationary 
+distribution. However, the local model 
+$$f(\vec{\bf{x}}) \simeq \frac{\pm a_1}{2}x_1^2+\dots +\frac{\pm a_m}{2}x_m^2$$
+for the loss function near a saddle point is just that: a *local* model. In 
+practice, there will be a radius $R$ outside of which the local model is no 
+longer an accurate approximation of loss function. It would be worthwhile 
+exploring when trajectories $x_t$ of the stochastic differential equation
+$$dx = ax \:dt+\sigma x \:dW +\tau\: dU$$
+first exceed $R$ in absolute value. For instance, the following plot gives an
+example of such a trajectory; notice that while it spends much of its time 
+near zero, it makes some occasional very large forays away from zero; any such
+foray might be sufficient to escape the saddle point.
+
+![A sample plot of $x_t$ when $a=0.5$, $\sigma = 1.2$, and $\tau=0$.](../images/saddle-points-and-sdg/gbm_freq_exc.png)
+
+In future work we would also like to explore whether or not saddle points in 
+typical neural networks have strong attractive noise, and how the size and depth
+of such networks affects the intensity of that attractive noise. For 
+instance, there need only be a single strongly repulsive direction from a saddle point in order to 
+escape; perhaps increasing the dimensionality of a network also increases the 
+odds that such a direction exist.
 
 ## Appendix A: Solving for the stationary distribution  {#Appendix_A}
 The [Fokker-Planck equation](https://en.wikipedia.org/wiki/Fokker%E2%80%93Planck_equation)
@@ -601,7 +615,7 @@ Thus, we have $\frac {\partial }{\partial y}J(y) = 0$, where $$J(y)=-A(y)p(y)
 +\frac{\partial}{\partial y} [D(y)p(y)].$$
 Since $J$ is constant and both $p$ and $\frac {\partial p}{\partial t}$ 
 vanish at $\infty$, we must have $J(y)=0$, which yields the ODE:
-$$\frac{\partial}{\partial y} [D(y)p(y)]=A(y)p(y).$$
+ $$\frac{\partial}{\partial y} [D(y)p(y)]=A(y)p(y).$$
 This, in turn, can be solved by standard techniques to find the solution
  $$\left(y^{2} \sigma^{2} + \omega^{2}\right)
  ^{\frac{a}{\sigma^{2}} - 1} 
