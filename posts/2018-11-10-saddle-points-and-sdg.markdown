@@ -69,7 +69,7 @@ $\vec{\bf{x}}_n = \vec{\bf{x}}_{n-1}- \nabla f$. So
 $\vec{\bf{x}}_n \simeq \vec{\bf{x}}_{n-1}$, and each update barely improves 
 the current guess. You can see this quite clearly in the following picture:
 
-![Gradient descent proceeds slowly near a saddle point, so the $\vec{\bf{x}}_n$ cluster more closely around the saddle points.](../images/saddle-points-and-sdg/gradient_descent2.png)
+![Gradient descent proceeds slowly near a saddle point, so the points $\vec{\bf{x}}_n$ cluster more closely around the saddle points.](../images/saddle-points-and-sdg/gradient_descent2.png)
 
 Nevertheless, if we choose $\vec{\bf{x}}_0$ randomly, then almost certainly:
 
@@ -116,7 +116,8 @@ measures the model's error on the $i$-th training  sample.
 $$ \nabla f(\vec{\bf{x}}) = \sum_j^N \nabla f_j(\vec{\bf{x}}).$$
 -->
 Now, deep neural networks need massive data sets to train successfully, and so 
-it extremely costly to evaluate the loss over the entire training set. Instead, 
+it is extremely costly to evaluate the loss over the entire training set. 
+Instead, 
 one typically approximates the loss on a randomly chosen minibatch 
 $J\subset \{1,\dots, N\}$ of data, 
 $$ f_{J-approx}(\vec{\bf{x}}) = \sum_{j\in J} f_j(\vec{\bf{x}}).$$
@@ -173,7 +174,8 @@ with $a$ positive. The
 corresponding local model for the noisy loss function is:
 $$f(x)=-(a+\xi)x^2 - \eta x$$
 where $\xi$ and $\eta$ are mean zero random variables encoding the noisy 
-measurement of the coefficients of $x^2$ and $x$ in the Taylor expansion.
+measurement of the coefficients of $x^2$ and $x$ in the Taylor expansion 
+(note that $f$ is now a random variable as well).
 
 <!-- The local model for a saddle point in a noisy loss function is:
 $$f(x_1,\dots,x_n) = \overset{concave}
@@ -203,9 +205,10 @@ Suppose that we flip a coin at each iteration and $\xi$ equals $\sigma$ if we
  get heads or 
 $-\sigma$ if we roll tails. Then after 1 iteration, $x$
  is 
-rescaled by either a factor of $1-\sigma$ or $1+\sigma$ (with equal probability):
+rescaled by either a factor of $1-\sigma$ or $1+\sigma$ (with equal 
+probability). We picture the possible transitions below:
 
-![The possible transitions](../images/saddle-points-and-sdg/stage_1_scr.jpeg)
+![](../images/saddle-points-and-sdg/stage_1_scr.jpeg)
 
 Next, consider what the possiblilities are after two iterations: $x$ is rescaled
  by a factor of either
@@ -221,22 +224,22 @@ heads and then a tails or vice versa (with total probability $\frac{1}{2} =
   \frac{1}{2}$)
 
 Since the first two scaling factors are both less than one, $\lvert 
-x_2\rvert<\lvert x_0\rvert$ with probability $\frac{3}{4}$.[^average_scale]
+x_2\rvert<\lvert x_0\rvert$ with probability $\frac{3}{4}$.
 
 [^average_scale]: On the other hand, the average value of the scaling factors
  is 1. Indeed the expected value of $x_n$ is $x_0$ for all $n$.
 
-![The possible 2-step transitions](../images/saddle-points-and-sdg/stage_2_scr.jpeg)
+![The possible 2-step transitions. The red numbers indicate the relative frequency of the corresponding state.](../images/saddle-points-and-sdg/stage_2_scr.jpeg)
 
 Continuing like this we see that $\lvert x_4\rvert<\lvert x_0\rvert$ with 
-probability at least $\frac{11}{16}$.[^average_scale]
+probability at least $\frac{11}{16}$.
 
-![The possible 4-step transitions](../images/saddle-points-and-sdg/stage_4_scr.jpeg)
+![The possible 4-step transitions.  The red numbers indicate the relative frequency of the corresponding state.](../images/saddle-points-and-sdg/stage_4_scr.jpeg)
 
 Indeed we see that the mode of $x_n$ - for which we expect an equal number of 
 heads and tails, namely $n/2$ - is 
 $$(1-\sigma)^{n/2}(1+\sigma)^{n/2}x_0=(1-\sigma^2)^{n/2}x_0,$$
-and it gravitates towards zero at an average rate of 
+and $x_n$ gravitates towards zero[^average_scale] at an average rate of 
 $$\frac{1}{n}(-\sigma^2\frac{n}{2})=-\frac{\sigma^2}{2}.$$
 
 In fact, we have $\lim_{n\to\infty} x_n = 0$ with probability 1. The figure
@@ -257,11 +260,14 @@ Recall:
 So the diffusive component is:
     $$ \Delta x = \eta$$
     
-After $N$ iterations, we have
+If we isolate the diffusive compenent, then after $N$ iterations we have
 $$x_N=x_0+\sum_{n=0}^N \Delta x_n = x_0+\sum_{i=0}^N \eta_i$$
 
-But $\eta_i$ are iid random variables with mean zero and norm $\tau$, so 
-$\sum_{i=0}^N \eta_i\sim N(0, \tau\sqrt{N})$. Therefore:
+Here $\eta_i$ are iid random variables with mean zero. If we assume the 
+standard deviation of $\eta_i$ is $\tau$
+ then by the central limit theorem, $\sum_{i=0}^N \eta_i\sim N(0, 
+ \tau\sqrt{N})$. 
+ Therefore:
 
 $$x_N\sim N(x_0, \tau\sqrt{N})$$
 
@@ -340,14 +346,15 @@ stationary
 distribution in the [appendix](#Appendix_A) and find that the random variable
 $x_\infty:=\lim_{t\to\infty}x_t$ is 
 [Pearson distributed](https://en.wikipedia.org/wiki/Pearson_distribution). 
-In particular, when $\omega \neq 0$, $y_\infty$ has 
+In particular, when $\omega \neq 0$, $x_\infty$ is governed by 
 the following probability density: 
 
-$$p(y_\infty)=\frac{1}{Z}\left(y^{2} \sigma^{2} + \omega^{2}\right)
+$$p(y_\infty)=\frac{1}{Z}\left(\sigma^{2}y_\infty^{2}  + \omega^{2}\right)
 ^{\frac{a}{\sigma^{2}} - 1} 
-e^{- \frac{2 a \mu \operatorname{atan}{\left (\frac{y \sigma}{\omega} \right )}}
-{\omega \sigma}}, \text{ where } x_\infty = y_\infty-\mu,$$
-where $Z$ is a normalizing constant (we will discuss the case where 
+e^{- \frac{2 a \mu \operatorname{atan}{\left (\frac{ \sigma\, y_\infty}{\omega}
+ \right )}}
+{\omega \sigma}}, \text{ where } x_\infty = y_\infty-\mu.$$
+Here $Z$ is a normalizing constant (we will discuss the case where 
 $\omega=0$ in the next subsection).
 
 Note that the random variable $x_\infty$ is 
@@ -365,7 +372,7 @@ Journal. 1990. p. 39–79.
 Indeed, the mode of this distribution is at $y = a\mu/(a-\sigma^2)$, which
 translates to $x=\frac{\rho \sigma \tau}{a - \sigma^{2}}$.
 
-![The stationary distributions when $a=1$, and $\tau=-1$; for $(\sigma=2, \rho=0)$, $(\sigma=\sqrt{2}, \rho=0)$, and $(\sigma=2, \rho=.95)$, respectively.](../images/saddle-points-and-sdg/stat_dist.png)
+![The stationary distributions when $a=1$, and $\tau=-1$; for $(\sigma=2, \rho=0)$, $(\sigma=\sqrt{2}, \rho=0)$, and $(\sigma=2, \rho=.95)$, respectively. The mode is indicated by a red dot.](../images/saddle-points-and-sdg/stat_dist.png)
 
 ### Special Case 1: $\xi$ and $\eta$ are perfectly correlated
 The special case where $\omega=0$ corresponds to $\xi$ and $\eta$ being 
@@ -407,7 +414,7 @@ We can categorize some major strategies as follows:
 - #### Increase the diffusive noise
     - [Perturbed Stochastic Gradient Descent](#PSGD)
 - #### Do not use a smooth loss function
-    - Use ReLu's
+    - [Use ReLu's](#USE_RELU)
 
 
 
@@ -432,10 +439,11 @@ Some basic methods to decrease the attractive noise are to:
     rate of $\frac{1}{\alpha}$ scales both $a$ and $\sigma$ by 
     $\frac{1}{\alpha}$. In particular,
      the saddle point will cease to be attractive if $\frac{a}{\alpha}> 
-     \frac{(\sigma)^2}{2\alpha^2}$. Thus, for learning rates 
+     \frac{1}{2}\big(\frac{\sigma}{\alpha}\big)^2$. Thus, for learning 
+     rates 
      $\frac{1}{\alpha}< \frac{2a}{\sigma^2}$, stochastic gradient descent 
      should escape the
-     saddle point. Indeed we will always escape saddle points and 
+     saddle point. Indeed we will almost surely escape saddle points and 
      succeed in converging to a local minima if we appropriately anneal the 
      learning rate[^pemantle]. The downside is that if the learning rate is 
      too small, training may take
@@ -451,15 +459,15 @@ as follows: given a "landmark point" $\tilde x$ and the full
 gradient $\mathbb{E}(\nabla f(\tilde x))$ at that landmark, we make gradient
 updates at the location $x$ using the following *variance-reduced* 
 gradient: 
-$$\nabla_{VR,\tilde x} f(x):= \nabla f(x) + 
+$$\nabla_{VR,\tilde x}\: f(x):= \nabla f(x) + 
 \overset{SVRG-modification}{\overbrace{
 \big(\mathbb{E}(\nabla f(\tilde x))-\nabla f(\tilde x)\big)}}.$$
 Notice that this modified "variance-reduced" gradient has the same expected 
 value as the original noisy gradient, since the modification (the second 
 term) has an expected value of zero. However, the variance of $\nabla_{VR,
-\tilde x} f(x)$ is much less than $\nabla f(x)$ when $x$ is near $\tilde x$.
-This becomes clear by regrouping the terms as follows:
-$$\nabla_{VR,\tilde x} f(x):= \overset{A}{\overbrace{
+\tilde x}\: f(x)$ is much less than $\nabla f(x)$ when $x$ is near $\tilde x$,
+as becomes clear by regrouping the terms as follows:
+$$\nabla_{VR,\tilde x}\: f(x):= \overset{A}{\overbrace{
 \big(\nabla f(x)-\nabla f(\tilde x)\big)}} + 
 \overset{B}{\overbrace{\mathbb{E}(\nabla f(\tilde x))}}.$$
 Term $B$ has zero variance, while term $A$ is the difference of two 
@@ -479,9 +487,10 @@ $$\begin{align}
 }\mathbb{E}(dW)=\mathbb{E}(dU)=0\\
 \end{align}$$
 so 
-$$\nabla_{VR,\tilde x} f(x) = -ax \:dt-\sigma x \:dW + \sigma 
+$$\nabla_{VR,\tilde x}\: f(x) = -ax \:dt-\sigma x \:dW + \sigma 
 \tilde x \:dW,$$
-and the stochastic differential equation $dx=-\nabla_{VR,\tilde x} f(x)$ becomes
+and the stochastic differential equation $dx=-\nabla_{VR,\tilde x}\: f(x)$ 
+becomes
 $$dx = ax \:dt+\sigma x \:dW +\tau' \:dW,$$
 where $\tau'=- \sigma \tilde x$. We recognize this SDE as the special case 
 where the attractive and diffusive noise are perfectly correlated; so 
@@ -564,7 +573,7 @@ Saddle Points Efficiently. 2017;1–35.
 Available [here](http://arxiv.org/abs/1703.00887)
 
 
-## Use ReLu's
+## Use ReLu's {#USE_RELU}
 Regularized linear units result in piecewise linear loss functions. In 
 theory, this dramatically changes the dynamics and eliminates the attractive 
 noise in the local update equation (though some diffusive noise may remain).
