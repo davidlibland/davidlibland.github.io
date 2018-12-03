@@ -95,7 +95,11 @@ and
 $$\Delta x_i = -a_ix_i \quad \text{ for } i>k \quad \text{ (attractive dynamics)}$$
 
 Though we are attracted to the saddle point in some directions, we are 
-eventually ejected from the saddle point by the repulsive forces.
+eventually ejected from the saddle point by the repulsive forces. Indeed
+it can be shown that with random initialization, we will almost surely 
+escape[^Lee_et_al]
+
+[^Lee_et_al]: Lee JD, Simchowitz M, Jordan MI, Recht B. Gradient Descent Converges to Minimizers. 2016;(Equation 1):1–11. 
 
 Finally, we should emphasize that there are **lots** of saddle points in deep 
 neural networks.
@@ -396,14 +400,142 @@ $$x_t = x_0e^{(a-\sigma^2/2)t+\sigma W_t} + \int_0^te^{(a-\sigma^2/2)(t-s)+\sigm
 ## How should we escape saddle points in the presence of noise?
 We can categorize some major strategies as follows:
 
+- #### Decrease the attractive noise
+    - [Increase the minibatch size](#DEC_ATT_NOISE)
+    - [Decrease/Anneal the learning rate](#DEC_ATT_NOISE)
+    - [Stochastic Variance Reduction Gradient Descent](#SVRG)
 - #### Increase the diffusive noise
     - [Perturbed Stochastic Gradient Descent](#PSGD)
-- #### Decrease the attractive noise
-    - Increase the minibatch size
-    - Decrease/Anneal the learning rate
-    - Stochastic Variance Reduction Gradient Descent (SVRGD)
 - #### Do not use a smooth loss function
     - Use ReLu's
+
+
+
+
+## Basic means to escape saddle points: {#DEC_ATT_NOISE}
+
+Some basic methods to decrease the attractive noise are to:
+
+- ##### Increase the minibatch size.
+    - Increasing the minibatch size by a factor of $\alpha$ decreases the 
+    attractive noise by a factor of $\frac{1}{\sqrt{\alpha}}$ which in turn 
+    decreases the odds of becoming stuck at the 
+    saddle point.
+     In more detail, recall that the saddle point ceases to be 
+     attractive when $\frac{\sigma^2}{2} < a$. Increasing the minibatch by a 
+     factor of $\alpha$ scales $\sigma$ to $\frac{\sigma}{\sqrt{\alpha}}$. 
+     Thus for $\frac{\sigma^2}{2a} < \alpha$, we expect to escape the saddle 
+     point. Unfortunately, the computational cost of each gradient step roughly 
+     increases by a factor of $\alpha$ as well.
+- ##### Decrease/Anneal the learning rate.
+    - Scaling the gradient descent updates by a learning 
+    rate of $\frac{1}{\alpha}$ scales both $a$ and $\sigma$ by 
+    $\frac{1}{\alpha}$. In particular,
+     the saddle point will cease to be attractive if $\frac{a}{\alpha}> 
+     \frac{(\sigma)^2}{2\alpha^2}$. Thus, for learning rates 
+     $\frac{1}{\alpha}< \frac{2a}{\sigma^2}$, stochastic gradient descent 
+     should escape the
+     saddle point. Indeed we will always escape saddle points and 
+     succeed in converging to a local minima if we appropriately anneal the 
+     learning rate[^pemantle]. The downside is that if the learning rate is 
+     too small, training may take
+     overly long (it roughly scales the training time by a factor of $\alpha$).
+     
+[^pemantle]: Pemantle R. Nonconvergence to unstable points in urn models and stochastic approximations. Ann Probab [Internet]. 1990;18(2):698--712. Available from: http://www.jstor.org/stable/2238700%5Cnhttp://projecteuclid.org/euclid.aoms/1177705148
+
+
+## Stochastic Variance Reduction Gradient Descent {#SVRG}
+Stochastic Variance Reduction Gradient Descent (SVRG)[^SVRG_cit] 
+reduce the variance of stochastic gradient descent by modifying the procedure
+as follows: given a "landmark point" $\tilde x$ and the full 
+gradient $\mathbb{E}(\nabla f(\tilde x))$ at that landmark, we make gradient
+updates at the location $x$ using the following *variance-reduced* 
+gradient: 
+$$\nabla_{VR,\tilde x} f(x):= \nabla f(x) + 
+\overset{SVRG-modification}{\overbrace{
+\big(\mathbb{E}(\nabla f(\tilde x))-\nabla f(\tilde x)\big)}}.$$
+Notice that this modified "variance-reduced" gradient has the same expected 
+value as the original noisy gradient, since the modification (the second 
+term) has an expected value of zero. However, the variance of $\nabla_{VR,
+\tilde x} f(x)$ is much less than $\nabla f(x)$ when $x$ is near $\tilde x$.
+This becomes clear by regrouping the terms as follows:
+$$\nabla_{VR,\tilde x} f(x):= \overset{A}{\overbrace{
+\big(\nabla f(x)-\nabla f(\tilde x)\big)}} + 
+\overset{B}{\overbrace{\mathbb{E}(\nabla f(\tilde x))}}.$$
+Term $B$ has zero variance, while term $A$ is the difference of two 
+postively correlated random variables, so it has low variance. Indeed, when
+$x = \tilde x$, the variance of $A$ is zero. 
+
+Since we need the landmark point $\tilde x$ to be near $x$, we simply update it
+periodically (for example at the start of every epoch).
+
+Given that SVRG reduces the variance of the gradient, we should expect it to
+escape saddle points. Let's analyze it from the perspective of the machinery
+developed above. We have:
+$$\begin{align}
+\nabla f(x) &= -ax \:dt-\sigma x \:dW -\tau\: dU,\\
+-\nabla f(\tilde x) &= a\tilde x \:dt+\sigma \tilde x \:dW +\tau\: dU,\text{ and}\\
+\mathbb{E}\big(\nabla f(\tilde x)\big) &= -a\tilde x \:dt\quad\text{ since 
+}\mathbb{E}(dW)=\mathbb{E}(dU)=0\\
+\end{align}$$
+so 
+$$\nabla_{VR,\tilde x} f(x) = -ax \:dt-\sigma x \:dW + \sigma 
+\tilde x \:dW,$$
+and the stochastic differential equation $dx=-\nabla_{VR,\tilde x} f(x)$ becomes
+$$dx = ax \:dt+\sigma x \:dW +\tau' \:dW,$$
+where $\tau'=- \sigma \tilde x$. We recognize this SDE as the special case 
+where the attractive and diffusive noise are perfectly correlated; so 
+$x_\infty+\tau'/\sigma=x_\infty-\tilde x$
+ is an [Inverse Gamma-distributed](https://en.wikipedia.org/wiki/Inverse-gamma_distribution) 
+random variable with scale 
+$\beta = -2\frac{ a\tau'}{\sigma^3} = 2\frac{ a\tilde x}{\sigma^2}$ 
+and shape $\alpha = 1-2a/\sigma^2$. In particular, with probability 1, 
+$$\lvert x_\infty\rvert >\lvert \tilde x\rvert,$$
+so we expect to move further from the saddle point every time we update the
+landmark point $\tilde x$. Moreover, since the scale $\beta$ of 
+the inverse gamma-distribution is proportional to $\tilde x$, heuristically,
+ we expect the to escape no slower than gometrically in the updates of the
+ landmark point, at a rate proportional to 
+ $\beta/\tilde x = 2\frac{a}{\sigma^2}$.
+
+
+[^SVRG_cit]: Johnson R, Zhang T. Accelerating Stochastic Gradient Descent 
+using Predictive Variance Reduction. Proc Conf Neural Inf Process Syst 
+[Internet]. 2013;1(3):315–23. Available [here](https://papers.nips.cc/paper/4937-accelerating-stochastic-gradient-descent-using-predictive-variance-reduction.pdf%0Ahttp://papers.nips.cc/paper/4937-accelerating-stochastic-gradient-descent-using-predictive-variance-reduction.pdf%5Cnhttp://papers.nips.cc)
+
+<!--Suppose you have $N$ training samples.
+
+until converged:<br>
+$\quad\quad$ store the current location $x$ as a landmark:<br>
+$\quad\quad$ set $x_{*} := x$<br>
+$\quad\quad$ compute the full gradient $\nabla f_{full}(x_*)$ at $x_*$<br>
+$\quad\quad$ for i = 1 ... N:<br>
+$\quad\quad\quad\quad$ compute the approximate gradient $\nabla f_{approx}(x)$ at x<br>
+$\quad\quad\quad\quad$ compute the approximate gradient $\nabla f_{approx}(x_*)$ at $x_*$<br>
+$\quad\quad\quad\quad$ set $\nabla f_{VR} := \nabla f_{approx}(x)-\nabla f_{approx}(x_*)+\nabla f_{full}(x_*)$<br>
+$\quad\quad\quad\quad$ set $x := x - \nabla f_{VR}$
+    
+    
+
+- Interestingly, SVRGD serves correlate the two noises $\xi$ and $\eta$ in the 
+equation $$dx = ax \:dt+\xi x \:dt +\eta\: dt$$
+- Infact, at the end of every inner loop $x-x_*$ exhibits an inverse gamma 
+distribution with scale proportionate to the distance from $x_*$ to the saddle 
+point: -->
+
+
+![A plot of the distribution of $x_\infty$ where $a=1$ and $\sigma=2$. The orange line indicates the location of the landmark point $\tilde x=1$. The saddle point is located at the origin. Notice that we expect $x_\infty$ to lie strictly further from the saddle point than the landmark point $\tilde x$.](../images/saddle-points-and-sdg/stat_dist_svrg.png)
+
+
+<!-- ## SVGRD guarantees that you will escape the saddle point
+
+Infact, you expect to escape geometrically (in the outer loop)
+
+### Problems:
+- Unfortuately, you may need to compute the full gradient (updating $x_*$) 
+before each foolproof step away from the saddle point.
+- This results in the same computational cost as gradient descent (which is 
+considered too expensive for training deep neural networks). -->
 
 ## Perturbed Stochastic Gradient Descent {#PSGD}
 
@@ -431,95 +563,24 @@ Since the  scale of the distribution of $x_\infty$ depends linearly on $\tau$,
 Saddle Points Efficiently. 2017;1–35. 
 Available [here](http://arxiv.org/abs/1703.00887)
 
-## Stochastic Variance Reduction Gradient Descent (SVRGD)
-### Idea:
-Suppose you have $N$ training samples.
-
-until converged:<br>
-$\quad\quad$ store the current location $x$ as a landmark:<br>
-$\quad\quad$ set $x_{*} := x$<br>
-$\quad\quad$ compute the full gradient $\nabla f_{full}(x_*)$ at $x_*$<br>
-$\quad\quad$ for i = 1 ... N:<br>
-$\quad\quad\quad\quad$ compute the approximate gradient $\nabla f_{approx}(x)$ at x<br>
-$\quad\quad\quad\quad$ compute the approximate gradient $\nabla f_{approx}(x_*)$ at $x_*$<br>
-$\quad\quad\quad\quad$ set $\nabla f_{VR} := \nabla f_{approx}(x)-\nabla f_{approx}(x_*)+\nabla f_{full}(x_*)$<br>
-$\quad\quad\quad\quad$ set $x := x - \nabla f_{VR}$
-    
-    
-
-- Interestingly, SVRGD serves correlate the two noises $\xi$ and $\eta$ in the 
-equation $$dx = ax \:dt+\xi x \:dt +\eta\: dt$$
-- Infact, at the end of every inner loop $x-x_*$ exhibits an inverse gamma 
-distribution with scale proportionate to the distance from $x_*$ to the saddle 
-point:
-
-
-![SVRG](../images/saddle-points-and-sdg/svrg.png)
-
-
-## SVGRD guarantees that you will escape the saddle point
-
-Infact, you expect to escape geometrically (in the outer loop)
-
-### Problems:
-- Unfortuately, you may need to compute the full gradient (updating $x_*$) 
-before each foolproof step away from the saddle point.
-- This results in the same computational cost as gradient descent (which is 
-considered too expensive for training deep neural networks).
-
-
-## Increase the minibatch size
-
-### Idea:
-- Full batch Gradient Descent will never get stuck at a saddle point 
-    - Why? It reduces the attactive noise to zero
-- Similarly, using large minibatches greatly decreases the odds of being stuck 
-at a saddle point 
-    - Why? It reduces the attactive noise
-    
-### Problems:
-- Unfortunately using larger minibatches becomes computationally expensive
-
-## Decrease the learning rate
-
-### Idea:
-Instead of making the updates $$x_n = x_{n-1} +\Delta x_{n-1},$$ make smaller 
-updates: $$x_n = x_{n-1} +\rho \Delta x_{n-1}$$ (where $0<\rho<1$ is small).
-
-- This decreases the attractive noise by a factor of $\sqrt{\rho}$
-
-### Problems:
-- Learning takes longer
-- It doesn't guarantee that we will escape, it only increases the odds
-
-## Anneal the learning rate
-
-### Idea:
-Decrease the learning rate on a regular schedule:
-$$x_n = x_{n-1} +\rho \Delta x_{n-1}$$
-$$p_n = \rho_0/n$$
-
-- This **Guarantees** tha we will escape the saddle point (eventually),
-- This is recommended for other reasons too
-
-### Problems:
-- It may still take too long to escape
 
 ## Use ReLu's
+Regularized linear units result in piecewise linear loss functions. In 
+theory, this dramatically changes the dynamics and eliminates the attractive 
+noise in the local update equation (though some diffusive noise may remain).
+In practice, if the piecewise linear loss function is sufficiently fine and 
+well approximated by a smooth loss, then the above analysis may still 
+indicate that the noise may cause stochastic gradient descent to suffer near
+saddle points. Of course, it would be worthwhile to investigate the situation
+ further.
 
-### Idea:
-- Regularized linear units result in piecewise linear loss functions
-- This eliminates the attractive noise in the local update
-- It dramatically changes the dynamics
-
-
-![RELU](../images/saddle-points-and-sdg/relu.png)
+![Stochastic gradient descent near a piecewise linear saddle point.](../images/saddle-points-and-sdg/relu.png)
 
 ## Open questions
 - What are the odds of the attractive noise being significantly strong?
-    - How is affected by the dimensionality?
+    - How are these odds affected by the dimensionality?
         - Is it less likely in high dimensions?
-    - How is it affected by depth vs width of the network?
+    - How are these odds affected by the depth vs width of the network?
 - How does momentum affect the dynamics?
 - Trade off between increasing batch size (reduces variance linearly) vs 
 increasing network size (reduces odds of only bad directions, while also 
