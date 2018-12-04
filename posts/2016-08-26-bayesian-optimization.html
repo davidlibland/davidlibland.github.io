@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <link rel="shortcut icon" href="../favicon.ico">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>David Li-Bland's Blog - Bayesian Optimization Exploration</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">David Li-Bland's Blog</a>
+            </div>
+            <div id="navigation">
+                <a href="../">Home</a>
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../archive.html">Archive</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Bayesian Optimization Exploration</h1>
+
+            <div class="info">
+    Posted on August 26, 2016
+    
+</div>
+
+<p>A short exploration of using bayesian optimization to make a good choice of hyperparameters. The detailed jupyter notebook can be found in <a href="https://github.com/davidlibland/BayesOptimDemo/blob/master/RegressionWithBayesOpt.ipynb"><code>RegressionWithBayesOpt.ipynb</code></a>.</p>
+<p>Consider the following data set (pictured at two separate scales):</p>
+<figure>
+<img src="../images/bayesian-optimization-demo/data_scatter_plot75.png" alt="Scatter Plot of Data" /><figcaption>Scatter Plot of Data</figcaption>
+</figure>
+<p>There seems to be a linear relationship between <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span>, and the <span class="math inline">\(y\)</span>-values seem to concentrate near <span class="math inline">\(x=0\)</span> and disperse for large values of <span class="math inline">\(x\)</span>. We want to model the data near <span class="math inline">\(x=0\)</span> via the following model</p>
+<p><span class="math display">\[y=ax+b+\epsilon\]</span></p>
+<p>where <span class="math inline">\(\epsilon\)</span> is noise which depends on <span class="math inline">\(x\)</span>. Notice that there are some extreme outliers, so using a least-squares approach doesn’t lead to a good fit:</p>
+<figure>
+<img src="../images/bayesian-optimization-demo/lst_sqr50.png" alt="Unregularized Fit" /><figcaption>Unregularized Fit</figcaption>
+</figure>
+<p>We need <span class="math inline">\(\epsilon\)</span> to <em>heavy-tailed</em>; so we fit a student t distribution (where the mode, scale, and shape all depend on <span class="math inline">\(x\)</span>) using gradient descent.</p>
+<p>Of course, this is a toy problem, which we are playing with because it is simple to visualize; this exploration is really about Bayesian optimization: The challenge is that we won’t acheive a good fit without proper regularization, and we then need to choose hyperparameters <span class="math inline">\(\lambda_1,\dots,\lambda_n\)</span> to control the regularization. For any given choice of hyperparameters, we can fit our model on a training subset of the data, and then evaluate the fit on a cross-validation subset of data leading to an error function:</p>
+<p><span class="math display">\[\varepsilon_{CV}(\lambda_1,\dots,\lambda_n):=\textrm{CrossValidationError}(\lambda_1,\dots,\lambda_n)\]</span></p>
+<p>which we want to minimize. To minimize this we could use:</p>
+<ol type="1">
+<li>A grid search for optimal values of <span class="math inline">\(\lambda_1,\dots,\lambda_n\)</span>,</li>
+<li>A random search for optimal values of <span class="math inline">\(\lambda_1,\dots,\lambda_n\)</span>,</li>
+<li>Numerical Optimization (such as Nelder-Mead),</li>
+<li>Bayesian Optimization.</li>
+</ol>
+<p>Note that sampling <span class="math inline">\(\varepsilon_{CV}\)</span> at a choice of hyperparameters can be costly (since we need to fit our model each time we sample); so rather than sampling <span class="math inline">\(\varepsilon_{CV}\)</span> either randomly or on a grid, we’d like to make informed decisions about the best places at whcih to sample <span class="math inline">\(\varepsilon_{CV}\)</span>. Numerical Optimization and Bayesian Optimization both attempt to make these informed decisions, and we focus on Bayesian Optimization in this tutorial.</p>
+<p>The basic idea is as follows: we will sample <span class="math inline">\(\varepsilon_{CV}\)</span> at a relatively small number of points, and then fit a gaussian process to that sample: i.e. we model the function <span class="math inline">\(\varepsilon_{CV}(\lambda_1,\dots,\lambda_n)\)</span> (pictured in red):</p>
+<figure>
+<img src="../images/bayesian-optimization-demo/gp1_30.png" alt="Gaussian Process fit to two samples" /><figcaption>Gaussian Process fit to two samples</figcaption>
+</figure>
+<p>This model give us estimates of both</p>
+<ol type="1">
+<li>the expected (mean) value of <span class="math inline">\(\varepsilon_{CV}\)</span> if we were to sample it at novel points (pictured in green), as well as</li>
+<li>our uncertainty (or expected deviation) from that mean (the region pictured in grey),</li>
+</ol>
+<p>and we use this information to choose where to sample <span class="math inline">\(\varepsilon_{CV}\)</span> next. Now it is important to note that our primary concern is not to accurately model <span class="math inline">\(\varepsilon_{CV}\)</span> <em>everywhere</em> with our gaussian process; our primary concern is to accurately model <span class="math inline">\(\varepsilon_{CV}\)</span> near it’s <strong>minimums</strong>. So we sample <span class="math inline">\(\varepsilon_{CV}\)</span> at points where we have the greatest <em>expected improvement</em> of fitting our model to the minimums of <span class="math inline">\(\varepsilon_{CV}\)</span>:</p>
+<figure>
+<img src="../images/bayesian-optimization-demo/gp2_30.png" alt="Gaussian Process fit to three samples" /><figcaption>Gaussian Process fit to three samples</figcaption>
+</figure>
+<p>and we repeat until our model fits <span class="math inline">\(\varepsilon_{CV}\)</span> accurately enough near it’s minimums:</p>
+<figure>
+<img src="../images/bayesian-optimization-demo/gp3_30.png" alt="Gaussian Process fit to four samples" /><figcaption>Gaussian Process fit to four samples</figcaption>
+</figure>
+<p>Finally, we use the resulting model to make an optimal choice for our hyperparameters <span class="math inline">\(\lambda_1,\dots,\lambda_n\)</span>.</p>
+<p>This leads to a much better fit (green is the probability density, purple is one standard deviation - only when defined):</p>
+<figure>
+<img src="../images/bayesian-optimization-demo/reg.png" alt="regularized_fit" /><figcaption>regularized_fit</figcaption>
+</figure>
+<p>The full tutorial (with lots of comments and details) can be found in the jupyter notebook <a href="RegressionWithBayesOpt.ipynb"><code>RegressionWithBayesOpt.ipynb</code></a>.</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
