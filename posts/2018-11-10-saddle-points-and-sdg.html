@@ -1,284 +1,284 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-    <head>
-        <link rel="shortcut icon" href="../favicon.ico">
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <title>David Li-Bland's Blog - Saddle Points and Stochastic Gradient Descent</title>
-        <link rel="stylesheet" type="text/css" href="../css/default.css" />
-        <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML-AM_CHTML' async></script>
-    </head>
-    <body>
-        <div id="header">
-            <div id="logo">
-                <a href="../">David Li-Bland's Blog</a>
-            </div>
-            <div id="navigation">
-                <a href="../">Home</a>
-                <a href="../about.html">About</a>
-                <a href="../contact.html">Contact</a>
-                <a href="../archive.html">Archive</a>
-            </div>
-        </div>
-
-        <div id="content">
-            <h1>Saddle Points and Stochastic Gradient Descent</h1>
-
-            <div class="info">
-    Posted on November 10, 2018
-    
+<head>
+    <link rel="shortcut icon" href="../favicon.ico">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>David Li-Bland's Blog - Saddle Points and Stochastic Gradient Descent</title>
+    <link rel="stylesheet" type="text/css" href="../css/default.css" />
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</head>
+<body>
+<div id="header">
+    <div id="logo">
+        <a href="../">David Li-Bland's Blog</a>
+    </div>
+    <div id="navigation">
+        <a href="../">Home</a>
+        <a href="../about.html">About</a>
+        <a href="../contact.html">Contact</a>
+        <a href="../archive.html">Archive</a>
+    </div>
 </div>
 
-<p>Essentially all machine learning models are trained using gradient descent. However, neural networks introduce two new challenges for gradient descent to cope with: saddle points and massive training sets. In this post we describe how these two challenges conspire together to create deadly traps, and we discuss means to escape them.</p>
-<h2 id="background-optimizing-a-loss-function">Background: Optimizing a loss function:</h2>
-<p>Machine learning algorithms attempt to model observed data in order to predict properties about unobserved data, and in most cases they do this by:</p>
-<ol type="1">
-<li>Parametrizing a space of models (with some parameters <span class="math inline">\(\vec{\bf{x}} = (x_1,\dots, x_m)\)</span>),</li>
-<li>Defining a loss function <span class="math inline">\(f(\vec{\bf{x}})\to \mathbb{R}\)</span> which measures the total error between the model at parameters <span class="math inline">\(\vec{\bf{x}} = (x_1,\dots, x_m)\)</span> and the observed data,</li>
-<li>Finding the optimal parameters <span class="math inline">\(\vec{\bf{x}} = (x_1,\dots, x_m)\)</span> which minimize the loss.</li>
-</ol>
-<p>Assuming we’ve completed steps (1) and (2), the question then becomes: How do we minimize a high dimensional function <span class="math inline">\(f(\vec{\bf{x}})\to \mathbb{R}\)</span>?</p>
-<!--![Loss Function](../images/saddle-points-and-sdg/loss_function.png)-->
-<h2 id="we-use-gradient-descent">We use gradient descent:</h2>
-<p>Although there are many possible ways to minimize a function, by and far the most successful approach for machine learning is to use gradient descent. This is a greedy algorithm, where we make an initial first guess <span class="math inline">\(\vec{\bf{x}}_0\)</span> for the optimal parameters, and then iteratively modifying that guess by moving in the direction in which <span class="math inline">\(f\)</span> decreases most quickly, that is:</p>
-<p><span class="math display">\[\vec{\bf{x}}_n = \vec{\bf{x}}_{n-1} - \nabla f\]</span></p>
-<p>(where <span class="math inline">\(\nabla f\)</span> denotes the gradient of <span class="math inline">\(f\)</span>). With some basic assumptions, the sequence of guesses <span class="math inline">\(\vec{\bf{x}}_0, \vec{\bf{x}}_1, \vec{\bf{x}}_2, \vec{\bf{x}}_3, \dots\)</span> can be shown to improve steadily, and if <span class="math inline">\(f\)</span> is sufficiently nice (for example if <span class="math inline">\(f\)</span> is strongly convex), then this sequence will converge to a (local) minimum of <span class="math inline">\(f\)</span> fairly quickly.</p>
-<figure>
-<img src="../images/saddle-points-and-sdg/gradient_descent1.png" alt="Gradient Descent, pictured here by a red path starting from a poor initial choice for \vec{\bf{x}} (where f(\vec{\bf{x}}) is large) converges fairly quickly to a local minimum." /><figcaption>Gradient Descent, pictured here by a red path starting from a poor initial choice for <span class="math inline">\(\vec{\bf{x}}\)</span> (where <span class="math inline">\(f(\vec{\bf{x}})\)</span> is large) converges fairly quickly to a local minimum.</figcaption>
-</figure>
-<h2 id="saddle-points">Saddle points</h2>
-<p>We now introduce the first villain in our saga, saddle points, which are known to cause problems for gradient descent. A saddle point is a critical point<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> of a function which is neither a local minima or maxima.</p>
-<figure>
-<img src="../images/saddle-points-and-sdg/saddle_point.png" alt="The red and green curves intersect at a generic saddle point in two dimensions. Along the green curve the saddle point looks like a local minimum, while it looks like a local maximum along the red curve." /><figcaption>The red and green curves intersect at a generic saddle point in two dimensions. Along the green curve the saddle point looks like a local minimum, while it looks like a local maximum along the red curve.</figcaption>
-</figure>
-<p>Locally, up to a rotation and translation, any function <span class="math inline">\(f\)</span> is well approximated near a saddle point by</p>
-<p><span class="math display">\[\overset{concave}
+<div id="content">
+    <h1>Saddle Points and Stochastic Gradient Descent</h1>
+
+    <div class="info">
+        Posted on November 10, 2018
+
+    </div>
+
+    <p>Essentially all machine learning models are trained using gradient descent. However, neural networks introduce two new challenges for gradient descent to cope with: saddle points and massive training sets. In this post we describe how these two challenges conspire together to create deadly traps, and we discuss means to escape them.</p>
+    <h2 id="background-optimizing-a-loss-function">Background: Optimizing a loss function:</h2>
+    <p>Machine learning algorithms attempt to model observed data in order to predict properties about unobserved data, and in most cases they do this by:</p>
+    <ol type="1">
+        <li>Parametrizing a space of models (with some parameters <span class="math inline">\(\vec{\bf{x}} = (x_1,\dots, x_m)\)</span>),</li>
+        <li>Defining a loss function <span class="math inline">\(f(\vec{\bf{x}})\to \mathbb{R}\)</span> which measures the total error between the model at parameters <span class="math inline">\(\vec{\bf{x}} = (x_1,\dots, x_m)\)</span> and the observed data,</li>
+        <li>Finding the optimal parameters <span class="math inline">\(\vec{\bf{x}} = (x_1,\dots, x_m)\)</span> which minimize the loss.</li>
+    </ol>
+    <p>Assuming we’ve completed steps (1) and (2), the question then becomes: How do we minimize a high dimensional function <span class="math inline">\(f(\vec{\bf{x}})\to \mathbb{R}\)</span>?</p>
+    <!--![Loss Function](../images/saddle-points-and-sdg/loss_function.png)-->
+    <h2 id="we-use-gradient-descent">We use gradient descent:</h2>
+    <p>Although there are many possible ways to minimize a function, by and far the most successful approach for machine learning is to use gradient descent. This is a greedy algorithm, where we make an initial first guess <span class="math inline">\(\vec{\bf{x}}_0\)</span> for the optimal parameters, and then iteratively modifying that guess by moving in the direction in which <span class="math inline">\(f\)</span> decreases most quickly, that is:</p>
+    <p><span class="math display">\[\vec{\bf{x}}_n = \vec{\bf{x}}_{n-1} - \nabla f\]</span></p>
+    <p>(where <span class="math inline">\(\nabla f\)</span> denotes the gradient of <span class="math inline">\(f\)</span>). With some basic assumptions, the sequence of guesses <span class="math inline">\(\vec{\bf{x}}_0, \vec{\bf{x}}_1, \vec{\bf{x}}_2, \vec{\bf{x}}_3, \dots\)</span> can be shown to improve steadily, and if <span class="math inline">\(f\)</span> is sufficiently nice (for example if <span class="math inline">\(f\)</span> is strongly convex), then this sequence will converge to a (local) minimum of <span class="math inline">\(f\)</span> fairly quickly.</p>
+    <figure>
+        <img src="../images/saddle-points-and-sdg/gradient_descent1.png" alt="Gradient Descent, pictured here by a red path starting from a poor initial choice for \vec{\bf{x}} (where f(\vec{\bf{x}}) is large) converges fairly quickly to a local minimum." /><figcaption>Gradient Descent, pictured here by a red path starting from a poor initial choice for <span class="math inline">\(\vec{\bf{x}}\)</span> (where <span class="math inline">\(f(\vec{\bf{x}})\)</span> is large) converges fairly quickly to a local minimum.</figcaption>
+    </figure>
+    <h2 id="saddle-points">Saddle points</h2>
+    <p>We now introduce the first villain in our saga, saddle points, which are known to cause problems for gradient descent. A saddle point is a critical point<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> of a function which is neither a local minima or maxima.</p>
+    <figure>
+        <img src="../images/saddle-points-and-sdg/saddle_point.png" alt="The red and green curves intersect at a generic saddle point in two dimensions. Along the green curve the saddle point looks like a local minimum, while it looks like a local maximum along the red curve." /><figcaption>The red and green curves intersect at a generic saddle point in two dimensions. Along the green curve the saddle point looks like a local minimum, while it looks like a local maximum along the red curve.</figcaption>
+    </figure>
+    <p>Locally, up to a rotation and translation, any function <span class="math inline">\(f\)</span> is well approximated near a saddle point by</p>
+    <p><span class="math display">\[\overset{concave}
 {\overbrace{\frac{-a_1}{2}x_1^2+\dots +\frac{-a_k}{2}x_k^2}}
 + \overset{convex}{\overbrace{\frac{a_{k+1}}{2}x_{k+1}^2+\dots+\frac{a_m}{2}x_m^2}}\]</span></p>
-<p>where <span class="math inline">\(1&lt;k&lt;m\)</span> and all <span class="math inline">\(a_i&gt;0\)</span>, and the translation sends the saddle point to the origin.</p>
-<h4 id="gradient-descent-proceeds-extremely-slowly-near-a-saddle-point.">Gradient descent proceeds extremely slowly near a saddle point.</h4>
-<p>Why? Well, <span class="math inline">\(\nabla f=0\)</span> at a saddle point <span class="math inline">\(\vec{\bf{x}}\)</span> so the gradient <span class="math inline">\(\nabla f\simeq 0\)</span> will be extremely small near the saddle point. Recall that each gradient descent update is given by <span class="math inline">\(\vec{\bf{x}}_n = \vec{\bf{x}}_{n-1}- \nabla f\)</span>. So <span class="math inline">\(\vec{\bf{x}}_n \simeq \vec{\bf{x}}_{n-1}\)</span>, and each update barely improves the current guess. You can see this quite clearly in the following picture:</p>
-<figure>
-<img src="../images/saddle-points-and-sdg/gradient_descent2.png" alt="Gradient descent proceeds slowly near a saddle point, so the points \vec{\bf{x}}_n cluster more closely around the saddle points." /><figcaption>Gradient descent proceeds slowly near a saddle point, so the points <span class="math inline">\(\vec{\bf{x}}_n\)</span> cluster more closely around the saddle points.</figcaption>
-</figure>
-<p>Nevertheless, if we choose <span class="math inline">\(\vec{\bf{x}}_0\)</span> randomly, then almost certainly:</p>
-<h4 id="gradient-descent-will-eventually-escape-saddle-points">Gradient descent will (eventually) escape saddle points</h4>
-<p>Recall the gradient descent formula <span class="math display">\[\vec{\bf{x}}_n = \vec{\bf{x}}_{n-1} +\Delta \vec{\bf{x}}_{n-1}, \quad \text{ where } \quad \Delta \vec{\bf{x}}= - \nabla f\]</span> in coordinates, this reads: <span class="math display">\[\Delta x_i = - \frac{\partial f}{\partial x_i}\]</span></p>
-<p>Meanwhile the local model for a saddle point at the origin is: <span class="math display">\[f(x_1,\dots,x_n) = \overset{concave}
+    <p>where <span class="math inline">\(1&lt;k&lt;m\)</span> and all <span class="math inline">\(a_i&gt;0\)</span>, and the translation sends the saddle point to the origin.</p>
+    <h4 id="gradient-descent-proceeds-extremely-slowly-near-a-saddle-point.">Gradient descent proceeds extremely slowly near a saddle point.</h4>
+    <p>Why? Well, <span class="math inline">\(\nabla f=0\)</span> at a saddle point <span class="math inline">\(\vec{\bf{x}}\)</span> so the gradient <span class="math inline">\(\nabla f\simeq 0\)</span> will be extremely small near the saddle point. Recall that each gradient descent update is given by <span class="math inline">\(\vec{\bf{x}}_n = \vec{\bf{x}}_{n-1}- \nabla f\)</span>. So <span class="math inline">\(\vec{\bf{x}}_n \simeq \vec{\bf{x}}_{n-1}\)</span>, and each update barely improves the current guess. You can see this quite clearly in the following picture:</p>
+    <figure>
+        <img src="../images/saddle-points-and-sdg/gradient_descent2.png" alt="Gradient descent proceeds slowly near a saddle point, so the points \vec{\bf{x}}_n cluster more closely around the saddle points." /><figcaption>Gradient descent proceeds slowly near a saddle point, so the points <span class="math inline">\(\vec{\bf{x}}_n\)</span> cluster more closely around the saddle points.</figcaption>
+    </figure>
+    <p>Nevertheless, if we choose <span class="math inline">\(\vec{\bf{x}}_0\)</span> randomly, then almost certainly:</p>
+    <h4 id="gradient-descent-will-eventually-escape-saddle-points">Gradient descent will (eventually) escape saddle points</h4>
+    <p>Recall the gradient descent formula <span class="math display">\[\vec{\bf{x}}_n = \vec{\bf{x}}_{n-1} +\Delta \vec{\bf{x}}_{n-1}, \quad \text{ where } \quad \Delta \vec{\bf{x}}= - \nabla f\]</span> in coordinates, this reads: <span class="math display">\[\Delta x_i = - \frac{\partial f}{\partial x_i}\]</span></p>
+    <p>Meanwhile the local model for a saddle point at the origin is: <span class="math display">\[f(x_1,\dots,x_n) = \overset{concave}
 {\overbrace{\frac{-a_1}{2}x_1^2+\dots +\frac{-a_k}{2}x_k^2}}
 + \overset{convex}{\overbrace{\frac{a_{k+1}}{2}x_{k+1}^2+\dots+\frac{a_m}{2}x_m^2}}\]</span></p>
-<p>Now, we have <span class="math display">\[\frac{\partial f}{\partial x_i} = -a_ix_i\quad \text{ for } i&lt;=k\quad\quad
+    <p>Now, we have <span class="math display">\[\frac{\partial f}{\partial x_i} = -a_ix_i\quad \text{ for } i&lt;=k\quad\quad
 \text{ and }\quad\quad\frac{\partial f}{\partial x_i} = a_ix_i\quad \text{ for } i&gt;k\]</span></p>
-<p>So: <span class="math display">\[\Delta x_i = a_ix_i \quad \text{ for } i&lt;=k \quad \text{ (repulsive dynamics)}\]</span> and <span class="math display">\[\Delta x_i = -a_ix_i \quad \text{ for } i&gt;k \quad \text{ (attractive dynamics)}\]</span></p>
-<p>Though we are attracted to the saddle point in some directions, we are eventually ejected from the saddle point by the repulsive forces. Indeed it can be shown that with random initialization, we will almost surely escape<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
-<p>Finally, we should emphasize that there are <strong>lots</strong> of saddle points in deep neural networks.</p>
-<h2 id="typically-the-loss-function-in-deep-neural-networks-is-noisy">Typically, the loss function in deep neural networks is noisy</h2>
-<p>For most machine learning algorithms, the loss function can be written as a sum over the training data:</p>
-<p><span class="math display">\[ f(\vec{\bf{x}}) = \sum_j^N f_j(\vec{\bf{x}}),\]</span></p>
-<p>where <span class="math inline">\(N\)</span> is the number of training samples, and each <span class="math inline">\(f_i(\vec{\bf{x}})\)</span> measures the model’s error on the <span class="math inline">\(i\)</span>-th training sample. <!--This allows us to compute the gradient $\nabla f$ as a sum of terms:
+    <p>So: <span class="math display">\[\Delta x_i = a_ix_i \quad \text{ for } i&lt;=k \quad \text{ (repulsive dynamics)}\]</span> and <span class="math display">\[\Delta x_i = -a_ix_i \quad \text{ for } i&gt;k \quad \text{ (attractive dynamics)}\]</span></p>
+    <p>Though we are attracted to the saddle point in some directions, we are eventually ejected from the saddle point by the repulsive forces. Indeed it can be shown that with random initialization, we will almost surely escape<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+    <p>Finally, we should emphasize that there are <strong>lots</strong> of saddle points in deep neural networks.</p>
+    <h2 id="typically-the-loss-function-in-deep-neural-networks-is-noisy">Typically, the loss function in deep neural networks is noisy</h2>
+    <p>For most machine learning algorithms, the loss function can be written as a sum over the training data:</p>
+    <p><span class="math display">\[ f(\vec{\bf{x}}) = \sum_j^N f_j(\vec{\bf{x}}),\]</span></p>
+    <p>where <span class="math inline">\(N\)</span> is the number of training samples, and each <span class="math inline">\(f_i(\vec{\bf{x}})\)</span> measures the model’s error on the <span class="math inline">\(i\)</span>-th training sample. <!--This allows us to compute the gradient $\nabla f$ as a sum of terms:
 $$ \nabla f(\vec{\bf{x}}) = \sum_j^N \nabla f_j(\vec{\bf{x}}).$$
 --> Now, deep neural networks need massive data sets to train successfully, and so it is extremely costly to evaluate the loss over the entire training set. Instead, one typically approximates the loss on a randomly chosen minibatch <span class="math inline">\(J\subset \{1,\dots, N\}\)</span> of data, <span class="math display">\[ f_{J-approx}(\vec{\bf{x}}) = \sum_{j\in J} f_j(\vec{\bf{x}}).\]</span> This subsampling from the training data results in a <em>noisy</em> loss function.</p>
-<p>In turn, we modify the gradient descent algorithm as follows: on iteration, we choose a random minibatch <span class="math inline">\(J\subset \{1,\dots, N\}\)</span> and update our previous guess by: <span class="math display">\[\vec{\bf{x}}_n = \vec{\bf{x}}_{n-1} +\Delta \vec{\bf{x}}_{n-1}, \quad \text{ where } \quad \Delta \vec{\bf{x}}= - \nabla f_{J-approx}\]</span> It is worthwhile noting that minibatches chosen randomly at each iteration are mutually independent. The resulting algorithm is known as <strong>stochastic gradient descent</strong>.</p>
-<p>Adding this noise, however, can have some surprising consequences near saddle points:</p>
-<h2 id="example">Example:</h2>
-<p>Consider the following function, standard gradient descent does an excellent job of finding the minimum:</p>
-<p><img src="../images/saddle-points-and-sdg/sdg_0noise.png" /></p>
-<p>Now, we will add some noise<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>. Notice that it doesn’t roll immediately into the basin, but lingers along the ridge somewhat.</p>
-<p><img src="../images/saddle-points-and-sdg/sdg_1noise.png" /></p>
-<p>Adding more noise<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> causes it to converge fairly rapidly to the saddle point between the two minima.</p>
-<p><img src="../images/saddle-points-and-sdg/sdg_2noise.png" /></p>
-<p>What is going on here? How can noise cause gradient descent to become trapped at saddle points?</p>
-<!--## Overview of talk:
-- I will describe why noise can trap us at saddle points
-- I will describe some ways to escape saddle points
-- Open questions-->
-<h2 id="why-noise-hurts">Why noise hurts</h2>
-<p>To simplify our discussion, we will restrict ourselves to one of the concave down principal axes of the saddle point - along which the dynamics ought to be repulsive - in which case the local model becomes one dimensional: <span class="math display">\[f(x)= -ax^2.\]</span> with <span class="math inline">\(a\)</span> positive. The corresponding local model for the noisy loss function is: <span class="math display">\[f(x)=-(a+\xi)x^2 - \eta x\]</span> where <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> are mean zero random variables encoding the noisy measurement of the coefficients of <span class="math inline">\(x^2\)</span> and <span class="math inline">\(x\)</span> in the Taylor expansion (note that <span class="math inline">\(f\)</span> is now a random variable as well).</p>
-<!-- The local model for a saddle point in a noisy loss function is:
-$$f(x_1,\dots,x_n) = \overset{concave}
-{\overbrace{\frac{-a_1-\xi_1}{2}x_1^2+\dots +\frac{-a_k-\xi_k}{2}x_k^2}}
-+ \overset{convex}{\overbrace{\frac{a_{k+1}-\xi_{k+1}}{2}x_{k+1}^2+\dots+\frac{a_m-\xi_m}{2}x_m^2}}\\
--\eta_1x_1-\cdots-\eta_mx_m
-$$
-where $\xi_i$ and $\eta_i$ are mean zero random variables encoding the noisy 
-measurement of each coefficient. -->
-<p>So, we have <span class="math display">\[\frac{\partial f}{\partial x} = -ax -\xi x-\eta\]</span> And the gradient descent update becomes: <span class="math display">\[\Delta x =a x+ \xi x+\eta\]</span></p>
-<p>Let’s consider the separate components <span class="math display">\[ \Delta x =
+    <p>In turn, we modify the gradient descent algorithm as follows: on iteration, we choose a random minibatch <span class="math inline">\(J\subset \{1,\dots, N\}\)</span> and update our previous guess by: <span class="math display">\[\vec{\bf{x}}_n = \vec{\bf{x}}_{n-1} +\Delta \vec{\bf{x}}_{n-1}, \quad \text{ where } \quad \Delta \vec{\bf{x}}= - \nabla f_{J-approx}\]</span> It is worthwhile noting that minibatches chosen randomly at each iteration are mutually independent. The resulting algorithm is known as <strong>stochastic gradient descent</strong>.</p>
+    <p>Adding this noise, however, can have some surprising consequences near saddle points:</p>
+    <h2 id="example">Example:</h2>
+    <p>Consider the following function, standard gradient descent does an excellent job of finding the minimum:</p>
+    <p><img src="../images/saddle-points-and-sdg/sdg_0noise.png" /></p>
+    <p>Now, we will add some noise<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>. Notice that it doesn’t roll immediately into the basin, but lingers along the ridge somewhat.</p>
+    <p><img src="../images/saddle-points-and-sdg/sdg_1noise.png" /></p>
+    <p>Adding more noise<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> causes it to converge fairly rapidly to the saddle point between the two minima.</p>
+    <p><img src="../images/saddle-points-and-sdg/sdg_2noise.png" /></p>
+    <p>What is going on here? How can noise cause gradient descent to become trapped at saddle points?</p>
+    <!--## Overview of talk:
+    - I will describe why noise can trap us at saddle points
+    - I will describe some ways to escape saddle points
+    - Open questions-->
+    <h2 id="why-noise-hurts">Why noise hurts</h2>
+    <p>To simplify our discussion, we will restrict ourselves to one of the concave down principal axes of the saddle point - along which the dynamics ought to be repulsive - in which case the local model becomes one dimensional: <span class="math display">\[f(x)= -ax^2.\]</span> with <span class="math inline">\(a\)</span> positive. The corresponding local model for the noisy loss function is: <span class="math display">\[f(x)=-(a+\xi)x^2 - \eta x\]</span> where <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> are mean zero random variables encoding the noisy measurement of the coefficients of <span class="math inline">\(x^2\)</span> and <span class="math inline">\(x\)</span> in the Taylor expansion (note that <span class="math inline">\(f\)</span> is now a random variable as well).</p>
+    <!-- The local model for a saddle point in a noisy loss function is:
+    $$f(x_1,\dots,x_n) = \overset{concave}
+    {\overbrace{\frac{-a_1-\xi_1}{2}x_1^2+\dots +\frac{-a_k-\xi_k}{2}x_k^2}}
+    + \overset{convex}{\overbrace{\frac{a_{k+1}-\xi_{k+1}}{2}x_{k+1}^2+\dots+\frac{a_m-\xi_m}{2}x_m^2}}\\
+    -\eta_1x_1-\cdots-\eta_mx_m
+    $$
+    where $\xi_i$ and $\eta_i$ are mean zero random variables encoding the noisy
+    measurement of each coefficient. -->
+    <p>So, we have <span class="math display">\[\frac{\partial f}{\partial x} = -ax -\xi x-\eta\]</span> And the gradient descent update becomes: <span class="math display">\[\Delta x =a x+ \xi x+\eta\]</span></p>
+    <p>Let’s consider the separate components <span class="math display">\[ \Delta x =
     \overset{\text{Usual gradient}}{\overbrace{ax}} 
     +\overset{\text{Attractive noise}}{\overbrace{\xi x}}+\overset{\text{Diffusive noise}}{\overbrace{\eta}}\]</span></p>
-<h2 id="attractive-noise">Attractive noise:</h2>
-<p>Let’s start by considering the attractive noise in isolation, ie. <span class="math inline">\(\Delta x = \xi x\)</span>. The corresponding update is <span class="math display">\[x_{n+1}=x_n + \xi x_n = (1+\xi) x_{n}\]</span></p>
-<p>Suppose that we flip a coin at each iteration and <span class="math inline">\(\xi\)</span> equals <span class="math inline">\(\sigma\)</span> if we get heads or <span class="math inline">\(-\sigma\)</span> if we roll tails. Then after 1 iteration, <span class="math inline">\(x\)</span> is rescaled by either a factor of <span class="math inline">\(1-\sigma\)</span> or <span class="math inline">\(1+\sigma\)</span> (with equal probability). We picture the possible transitions below:</p>
-<p><img src="../images/saddle-points-and-sdg/stage_1_scr.jpeg" /></p>
-<p>Next, consider what the possiblilities are after two iterations: <span class="math inline">\(x\)</span> is rescaled by a factor of either</p>
-<ol type="1">
-<li><span class="math inline">\((1-\sigma)^2\)</span> if we roll two tails (with probably <span class="math inline">\(\frac{1}{4}=\frac{1}{2}\times \frac{1}{2}\)</span>)</li>
-<li><span class="math inline">\((1-\sigma^2)=(1-\sigma)(1+\sigma)\)</span> in two distinct ways: we roll either a heads and then a tails or vice versa (with total probability <span class="math inline">\(\frac{1}{2} = 2\times(\frac{1}{2}\times \frac{1}{2})\)</span>)</li>
-<li><span class="math inline">\((1+\sigma)^2\)</span> if we roll two tails (with probably <span class="math inline">\(\frac{1}{4}=\frac{1}{2}\times  \frac{1}{2}\)</span>)</li>
-</ol>
-<p>Since the first two scaling factors are both less than one, <span class="math inline">\(\lvert x_2\rvert&lt;\lvert x_0\rvert\)</span> with probability <span class="math inline">\(\frac{3}{4}\)</span>.</p>
-<figure>
-<img src="../images/saddle-points-and-sdg/stage_2_scr.jpeg" alt="The possible 2-step transitions. The red numbers indicate the relative frequency of the corresponding state." /><figcaption>The possible 2-step transitions. The red numbers indicate the relative frequency of the corresponding state.</figcaption>
-</figure>
-<p>Continuing like this we see that <span class="math inline">\(\lvert x_4\rvert&lt;\lvert x_0\rvert\)</span> with probability at least <span class="math inline">\(\frac{11}{16}\)</span>.</p>
-<figure>
-<img src="../images/saddle-points-and-sdg/stage_4_scr.jpeg" alt="The possible 4-step transitions. The red numbers indicate the relative frequency of the corresponding state." /><figcaption>The possible 4-step transitions. The red numbers indicate the relative frequency of the corresponding state.</figcaption>
-</figure>
-<p>Indeed we see that the mode of <span class="math inline">\(x_n\)</span> - for which we expect an equal number of heads and tails, namely <span class="math inline">\(n/2\)</span> - is <span class="math display">\[(1-\sigma)^{n/2}(1+\sigma)^{n/2}x_0=(1-\sigma^2)^{n/2}x_0,\]</span> and <span class="math inline">\(x_n\)</span> gravitates towards zero<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> at an average rate of <span class="math display">\[\frac{1}{n}(-\sigma^2\frac{n}{2})=-\frac{\sigma^2}{2}.\]</span></p>
-<p>In fact, we have <span class="math inline">\(\lim_{n\to\infty} x_n = 0\)</span> with probability 1. The figure below illustrates this trend for larger and larger <span class="math inline">\(n\)</span>.</p>
-<figure>
-<img src="../images/saddle-points-and-sdg/stage_n.png" alt="With \sigma=0.1, we sample x_n (at n=10, 20, 100, 1000); those x_n with \lvert x_n\rvert \leq\lvert x_0\rvert are colored red, while the rest are colored blue." /><figcaption>With <span class="math inline">\(\sigma=0.1\)</span>, we sample <span class="math inline">\(x_n\)</span> (at <span class="math inline">\(n=10, 20, 100, 1000\)</span>); those <span class="math inline">\(x_n\)</span> with <span class="math inline">\(\lvert x_n\rvert \leq\lvert x_0\rvert\)</span> are colored red, while the rest are colored blue.</figcaption>
-</figure>
-<h1 id="diffusive-noise">Diffusive noise:</h1>
-<p>Recall: <span class="math display">\[ \Delta x =
+    <h2 id="attractive-noise">Attractive noise:</h2>
+    <p>Let’s start by considering the attractive noise in isolation, ie. <span class="math inline">\(\Delta x = \xi x\)</span>. The corresponding update is <span class="math display">\[x_{n+1}=x_n + \xi x_n = (1+\xi) x_{n}\]</span></p>
+    <p>Suppose that we flip a coin at each iteration and <span class="math inline">\(\xi\)</span> equals <span class="math inline">\(\sigma\)</span> if we get heads or <span class="math inline">\(-\sigma\)</span> if we roll tails. Then after 1 iteration, <span class="math inline">\(x\)</span> is rescaled by either a factor of <span class="math inline">\(1-\sigma\)</span> or <span class="math inline">\(1+\sigma\)</span> (with equal probability). We picture the possible transitions below:</p>
+    <p><img src="../images/saddle-points-and-sdg/stage_1_scr.jpeg" /></p>
+    <p>Next, consider what the possiblilities are after two iterations: <span class="math inline">\(x\)</span> is rescaled by a factor of either</p>
+    <ol type="1">
+        <li><span class="math inline">\((1-\sigma)^2\)</span> if we roll two tails (with probably <span class="math inline">\(\frac{1}{4}=\frac{1}{2}\times \frac{1}{2}\)</span>)</li>
+        <li><span class="math inline">\((1-\sigma^2)=(1-\sigma)(1+\sigma)\)</span> in two distinct ways: we roll either a heads and then a tails or vice versa (with total probability <span class="math inline">\(\frac{1}{2} = 2\times(\frac{1}{2}\times \frac{1}{2})\)</span>)</li>
+        <li><span class="math inline">\((1+\sigma)^2\)</span> if we roll two tails (with probably <span class="math inline">\(\frac{1}{4}=\frac{1}{2}\times  \frac{1}{2}\)</span>)</li>
+    </ol>
+    <p>Since the first two scaling factors are both less than one, <span class="math inline">\(\lvert x_2\rvert&lt;\lvert x_0\rvert\)</span> with probability <span class="math inline">\(\frac{3}{4}\)</span>.</p>
+    <figure>
+        <img src="../images/saddle-points-and-sdg/stage_2_scr.jpeg" alt="The possible 2-step transitions. The red numbers indicate the relative frequency of the corresponding state." /><figcaption>The possible 2-step transitions. The red numbers indicate the relative frequency of the corresponding state.</figcaption>
+    </figure>
+    <p>Continuing like this we see that <span class="math inline">\(\lvert x_4\rvert&lt;\lvert x_0\rvert\)</span> with probability at least <span class="math inline">\(\frac{11}{16}\)</span>.</p>
+    <figure>
+        <img src="../images/saddle-points-and-sdg/stage_4_scr.jpeg" alt="The possible 4-step transitions. The red numbers indicate the relative frequency of the corresponding state." /><figcaption>The possible 4-step transitions. The red numbers indicate the relative frequency of the corresponding state.</figcaption>
+    </figure>
+    <p>Indeed we see that the mode of <span class="math inline">\(x_n\)</span> - for which we expect an equal number of heads and tails, namely <span class="math inline">\(n/2\)</span> - is <span class="math display">\[(1-\sigma)^{n/2}(1+\sigma)^{n/2}x_0=(1-\sigma^2)^{n/2}x_0,\]</span> and <span class="math inline">\(x_n\)</span> gravitates towards zero<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> at an average rate of <span class="math display">\[\frac{1}{n}(-\sigma^2\frac{n}{2})=-\frac{\sigma^2}{2}.\]</span></p>
+    <p>In fact, we have <span class="math inline">\(\lim_{n\to\infty} x_n = 0\)</span> with probability 1. The figure below illustrates this trend for larger and larger <span class="math inline">\(n\)</span>.</p>
+    <figure>
+        <img src="../images/saddle-points-and-sdg/stage_n.png" alt="With \sigma=0.1, we sample x_n (at n=10, 20, 100, 1000); those x_n with \lvert x_n\rvert \leq\lvert x_0\rvert are colored red, while the rest are colored blue." /><figcaption>With <span class="math inline">\(\sigma=0.1\)</span>, we sample <span class="math inline">\(x_n\)</span> (at <span class="math inline">\(n=10, 20, 100, 1000\)</span>); those <span class="math inline">\(x_n\)</span> with <span class="math inline">\(\lvert x_n\rvert \leq\lvert x_0\rvert\)</span> are colored red, while the rest are colored blue.</figcaption>
+    </figure>
+    <h1 id="diffusive-noise">Diffusive noise:</h1>
+    <p>Recall: <span class="math display">\[ \Delta x =
     \overset{\text{Usual gradient}}{\overbrace{ax}} 
     +\overset{\text{Attractive noise}}{\overbrace{\xi x}}+
     \overset{\text{Diffusive noise}}{\overbrace{\eta}}\]</span></p>
-<p>So the diffusive component is: <span class="math display">\[ \Delta x = \eta\]</span></p>
-<p>If we isolate the diffusive compenent, then after <span class="math inline">\(N\)</span> iterations we have <span class="math display">\[x_N=x_0+\sum_{n=0}^N \Delta x_n = x_0+\sum_{i=0}^N \eta_i\]</span></p>
-<p>Here <span class="math inline">\(\eta_i\)</span> are iid random variables with mean zero. If we assume the standard deviation of <span class="math inline">\(\eta_i\)</span> is <span class="math inline">\(\tau\)</span> then by the central limit theorem, <span class="math inline">\(\sum_{i=0}^N \eta_i\sim N(0,  \tau\sqrt{N})\)</span>. Therefore:</p>
-<p><span class="math display">\[x_N\sim N(x_0, \tau\sqrt{N})\]</span></p>
-<p>In summary, <span class="math inline">\(x\)</span> diffuses at a rate of <span class="math inline">\(\tau\sqrt{N}\)</span>.</p>
-<h2 id="does-the-diffusive-or-attractive-noise-dominate">Does the diffusive or attractive noise dominate?</h2>
-<p>Consider again the model for stochastic gradient descent localized around a saddle point:</p>
-<p><span class="math display">\[ \Delta x =
+    <p>So the diffusive component is: <span class="math display">\[ \Delta x = \eta\]</span></p>
+    <p>If we isolate the diffusive compenent, then after <span class="math inline">\(N\)</span> iterations we have <span class="math display">\[x_N=x_0+\sum_{n=0}^N \Delta x_n = x_0+\sum_{i=0}^N \eta_i\]</span></p>
+    <p>Here <span class="math inline">\(\eta_i\)</span> are iid random variables with mean zero. If we assume the standard deviation of <span class="math inline">\(\eta_i\)</span> is <span class="math inline">\(\tau\)</span> then by the central limit theorem, <span class="math inline">\(\sum_{i=0}^N \eta_i\sim N(0,  \tau\sqrt{N})\)</span>. Therefore:</p>
+    <p><span class="math display">\[x_N\sim N(x_0, \tau\sqrt{N})\]</span></p>
+    <p>In summary, <span class="math inline">\(x\)</span> diffuses at a rate of <span class="math inline">\(\tau\sqrt{N}\)</span>.</p>
+    <h2 id="does-the-diffusive-or-attractive-noise-dominate">Does the diffusive or attractive noise dominate?</h2>
+    <p>Consider again the model for stochastic gradient descent localized around a saddle point:</p>
+    <p><span class="math display">\[ \Delta x =
     \overset{\text{Usual gradient}}{\overbrace{ax}} 
     +\overset{\text{Attractive noise}}{\overbrace{\xi x}}
     +\overset{\text{Diffusive noise}}{\overbrace{\eta}}\]</span></p>
-<p>Since the intensity of the attractive noise is proportional to <span class="math inline">\(x\)</span>, it’s clear that the attractive noise dominates the behavior for sufficiently large values of <span class="math inline">\(x\)</span>, while the diffusive noise dominates the behavior for sufficiently small values of <span class="math inline">\(x\)</span>.</p>
-<p>This describes the behavior at the two extremes. However, further direct analysis of the behavior is hampered by our not knowing anything about the random variables <span class="math inline">\(\xi\)</span> or <span class="math inline">\(\eta\)</span>. Fortunately, if we assume they have finite moments, rescaled sums of independent draws of <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> limit to Brownian motion, and it makes sense to replace the finite difference equation above with the corresponding stochastic differential equation</p>
-<p><span class="math display">\[dx = ax \:dt+\xi x \:dt +\eta\: dt\]</span> where <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> are white noise whose correlation is time-independent.</p>
-<p>Let <span class="math inline">\(\sigma\)</span> and <span class="math inline">\(\tau\)</span> represent the scaling factors such that <span class="math inline">\(W_t=\int_0^t\frac{\xi}{\sigma}\:dt\)</span> and <span class="math inline">\(V_t=\int_0^t\frac{\eta}{\tau}\:dt\)</span> are standard Brownian motion, and let <span class="math inline">\(\rho\)</span> denote their correlation.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> Then we may write the equation as</p>
-<p><span class="math display">\[dx = ax \:dt+\sigma x \:dW +\tau\: dU\]</span></p>
-<p>Substituting <span class="math display">\[\begin{align}
+    <p>Since the intensity of the attractive noise is proportional to <span class="math inline">\(x\)</span>, it’s clear that the attractive noise dominates the behavior for sufficiently large values of <span class="math inline">\(x\)</span>, while the diffusive noise dominates the behavior for sufficiently small values of <span class="math inline">\(x\)</span>.</p>
+    <p>This describes the behavior at the two extremes. However, further direct analysis of the behavior is hampered by our not knowing anything about the random variables <span class="math inline">\(\xi\)</span> or <span class="math inline">\(\eta\)</span>. Fortunately, if we assume they have finite moments, rescaled sums of independent draws of <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> limit to Brownian motion, and it makes sense to replace the finite difference equation above with the corresponding stochastic differential equation</p>
+    <p><span class="math display">\[dx = ax \:dt+\xi x \:dt +\eta\: dt\]</span> where <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> are white noise whose correlation is time-independent.</p>
+    <p>Let <span class="math inline">\(\sigma\)</span> and <span class="math inline">\(\tau\)</span> represent the scaling factors such that <span class="math inline">\(W_t=\int_0^t\frac{\xi}{\sigma}\:dt\)</span> and <span class="math inline">\(V_t=\int_0^t\frac{\eta}{\tau}\:dt\)</span> are standard Brownian motion, and let <span class="math inline">\(\rho\)</span> denote their correlation.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> Then we may write the equation as</p>
+    <p><span class="math display">\[dx = ax \:dt+\sigma x \:dW +\tau\: dU\]</span></p>
+    <p>Substituting <span class="math display">\[\begin{align}
 \mu &amp;= \frac{\tau\rho}{\sigma}, &amp;
 \omega &amp;= \tau\sqrt{1-\rho^2}, \text{ and }\\
 V &amp;= \frac{U-\rho W}{\sqrt{1-\rho^2}} &amp; y&amp;=x+\mu
 \end{align}\]</span> yields the stochastic differential equation <span class="math display">\[dy  = a(y-\mu)\:dt +\sigma y\:dW+\omega\: dV\]</span> where <span class="math inline">\(V\)</span> and <span class="math inline">\(W\)</span> are independent standard Brownian motions.</p>
-<p>This equation has the following analytical solution:</p>
-<p><span class="math display">\[y_t = y_0e^{(a-\frac{\sigma^2}{2})t+\sigma W_t}+\int_0^t e^{
+    <p>This equation has the following analytical solution:</p>
+    <p><span class="math display">\[y_t = y_0e^{(a-\frac{\sigma^2}{2})t+\sigma W_t}+\int_0^t e^{
 (a-\frac{\sigma^2}{2})(t-s)+\sigma (W_t-W_s)}d\nu\]</span> where <span class="math inline">\(\nu = \omega V_s-a\mu s\)</span>, as can be verified directly by differentiation (using <a href="https://en.wikipedia.org/wiki/It%C3%B4%27s_lemma">Ito’s lemma</a>).</p>
-<p>In particular, we see that the attractive noise shifts the rate of exponential growth from <span class="math inline">\(a\)</span> to <span class="math inline">\(a-\frac{\sigma^2}{2}\)</span> .<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a> Thus, if <span class="math inline">\(a&lt; \frac{\sigma^2}{2}\)</span>, then the growth rate becomes negative, namely the saddle point becomes attractive. Indeed, if there is no diffusive noise (i.e. <span class="math inline">\(\tau=0\)</span>), the solution reduces to <span class="math inline">\(x_t = x_0e^{(a-\frac{\sigma^2}{2})t+\sigma W_t}\)</span>, which almost surely converges to zero.</p>
-<h2 id="stationary-distribution">Stationary distribution:</h2>
-<p>We would like to undestand the long term behaviour of <span class="math inline">\(x_t\)</span>. If <span class="math inline">\(a&lt; \frac{\sigma^2}{2}\)</span>, then <span class="math inline">\(x_\infty:=\lim_{t\to\infty}x_t\)</span> converges to a stationary distribution<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a>. We solve for the stationary distribution in the <a href="#Appendix_A">appendix</a> and find that the random variable <span class="math inline">\(x_\infty:=\lim_{t\to\infty}x_t\)</span> is <a href="https://en.wikipedia.org/wiki/Pearson_distribution">Pearson distributed</a>. In particular, when <span class="math inline">\(\omega \neq 0\)</span>, <span class="math inline">\(x_\infty\)</span> is governed by the following probability density:</p>
-<p><span class="math display">\[p(y_\infty)=\frac{1}{Z}\left(\sigma^{2}y_\infty^{2}  + \omega^{2}\right)
+    <p>In particular, we see that the attractive noise shifts the rate of exponential growth from <span class="math inline">\(a\)</span> to <span class="math inline">\(a-\frac{\sigma^2}{2}\)</span> .<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a> Thus, if <span class="math inline">\(a&lt; \frac{\sigma^2}{2}\)</span>, then the growth rate becomes negative, namely the saddle point becomes attractive. Indeed, if there is no diffusive noise (i.e. <span class="math inline">\(\tau=0\)</span>), the solution reduces to <span class="math inline">\(x_t = x_0e^{(a-\frac{\sigma^2}{2})t+\sigma W_t}\)</span>, which almost surely converges to zero.</p>
+    <h2 id="stationary-distribution">Stationary distribution:</h2>
+    <p>We would like to undestand the long term behaviour of <span class="math inline">\(x_t\)</span>. If <span class="math inline">\(a&lt; \frac{\sigma^2}{2}\)</span>, then <span class="math inline">\(x_\infty:=\lim_{t\to\infty}x_t\)</span> converges to a stationary distribution<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a>. We solve for the stationary distribution in the <a href="#Appendix_A">appendix</a> and find that the random variable <span class="math inline">\(x_\infty:=\lim_{t\to\infty}x_t\)</span> is <a href="https://en.wikipedia.org/wiki/Pearson_distribution">Pearson distributed</a>. In particular, when <span class="math inline">\(\omega \neq 0\)</span>, <span class="math inline">\(x_\infty\)</span> is governed by the following probability density:</p>
+    <p><span class="math display">\[p(y_\infty)=\frac{1}{Z}\left(\sigma^{2}y_\infty^{2}  + \omega^{2}\right)
 ^{\frac{a}{\sigma^{2}} - 1} 
 e^{- \frac{2 a \mu \operatorname{atan}{\left (\frac{ \sigma\, y_\infty}{\omega}
  \right )}}
 {\omega \sigma}}, \text{ where } x_\infty = y_\infty-\mu.\]</span> Here <span class="math inline">\(Z\)</span> is a normalizing constant (we will discuss the case where <span class="math inline">\(\omega=0\)</span> in the next subsection).</p>
-<p>Note that the random variable <span class="math inline">\(x_\infty\)</span> is non integrable, which is to say its expected value is infinite. However, we do not expect <span class="math inline">\(x_t\)</span> to diverge: for instance, for large <span class="math inline">\(R\)</span>, the odds that <span class="math inline">\(\lvert \lim_{t\to\infty}x_t \rvert &gt; R\)</span> become negligibly small: <span class="math display">\[\mathbb{P}(\lvert \lim_{t\to\infty}x_t \rvert &gt; R) = 
+    <p>Note that the random variable <span class="math inline">\(x_\infty\)</span> is non integrable, which is to say its expected value is infinite. However, we do not expect <span class="math inline">\(x_t\)</span> to diverge: for instance, for large <span class="math inline">\(R\)</span>, the odds that <span class="math inline">\(\lvert \lim_{t\to\infty}x_t \rvert &gt; R\)</span> become negligibly small: <span class="math display">\[\mathbb{P}(\lvert \lim_{t\to\infty}x_t \rvert &gt; R) =
 O\big(\big(\frac{1}{R}\big)^{1-\frac{2a}{\sigma^{2}}}\big)\text{ as } R\to 
 \infty\]</span></p>
-<p>Indeed, the mode of this distribution is at <span class="math inline">\(y = a\mu/(a-\sigma^2)\)</span>, which translates to <span class="math inline">\(x=\frac{\rho \sigma \tau}{a - \sigma^{2}}\)</span>.</p>
-<figure>
-<img src="../images/saddle-points-and-sdg/stat_dist.png" alt="The stationary distributions when a=1, and \tau=-1; for (\sigma=2, \rho=0), (\sigma=\sqrt{2}, \rho=0), and (\sigma=2, \rho=.95), respectively. The mode is indicated by a red dot." /><figcaption>The stationary distributions when <span class="math inline">\(a=1\)</span>, and <span class="math inline">\(\tau=-1\)</span>; for <span class="math inline">\((\sigma=2, \rho=0)\)</span>, <span class="math inline">\((\sigma=\sqrt{2}, \rho=0)\)</span>, and <span class="math inline">\((\sigma=2, \rho=.95)\)</span>, respectively. The mode is indicated by a red dot.</figcaption>
-</figure>
-<h3 id="special-case-1-xi-and-eta-are-perfectly-correlated">Special Case 1: <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> are perfectly correlated</h3>
-<p>The special case where <span class="math inline">\(\omega=0\)</span> corresponds to <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> being perfectly correlated. In this case <span class="math inline">\(y_\infty\)</span> is <a href="https://en.wikipedia.org/wiki/Inverse-gamma_distribution">Inverse Gamma-distributed</a><a href="#fn9" class="footnote-ref" id="fnref9"><sup>9</sup></a>. To describe the distribution of <span class="math inline">\(x_\infty\)</span>, we may assume without loss of generality that <span class="math inline">\(\rho=1\)</span>. Then <span class="math inline">\(x_\infty+\tau/\sigma\)</span> is an <a href="https://en.wikipedia.org/wiki/Inverse-gamma_distribution">Inverse Gamma-distributed</a> random variable with scale <span class="math inline">\(\beta = -2\frac{ a\tau}{\sigma^3}\)</span> and shape <span class="math inline">\(\alpha = 1-2a/\sigma^2\)</span>.</p>
-<h3 id="special-case-2-xi-and-eta-are-not-correlated">Special Case 2: <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> are <em>not</em> correlated</h3>
-<p>In this case, <span class="math inline">\(\rho=0\)</span>, and <span class="math inline">\(x_\infty\)</span> is <a href="https://en.wikipedia.org/wiki/Student%27s_t-distribution">Student’s t-distributed</a> with <span class="math inline">\(\nu =1-\frac{2a}{\sigma^2}\)</span> degrees of freedom, location <span class="math inline">\(\mu=0\)</span>, and scale <span class="math inline">\(\sqrt{\frac{\tau^2}{\sigma^2-2a}}\)</span>.</p>
-<!-- $\eta$ serves to time-average the solution
-$$\hat x_t=x_0e^{(a-\sigma^2/2)t+\sigma W_t}$$
-of the equation 
-$$d\hat x = a\hat x \:dt+\sigma \hat x \:dW$$
-Explictly, we have
-$$x_t = x_0e^{(a-\sigma^2/2)t+\sigma W_t} + \int_0^te^{(a-\sigma^2/2)(t-s)+\sigma (W_t-W_s)}\eta \: ds$$
+    <p>Indeed, the mode of this distribution is at <span class="math inline">\(y = a\mu/(a-\sigma^2)\)</span>, which translates to <span class="math inline">\(x=\frac{\rho \sigma \tau}{a - \sigma^{2}}\)</span>.</p>
+    <figure>
+        <img src="../images/saddle-points-and-sdg/stat_dist.png" alt="The stationary distributions when a=1, and \tau=-1; for (\sigma=2, \rho=0), (\sigma=\sqrt{2}, \rho=0), and (\sigma=2, \rho=.95), respectively. The mode is indicated by a red dot." /><figcaption>The stationary distributions when <span class="math inline">\(a=1\)</span>, and <span class="math inline">\(\tau=-1\)</span>; for <span class="math inline">\((\sigma=2, \rho=0)\)</span>, <span class="math inline">\((\sigma=\sqrt{2}, \rho=0)\)</span>, and <span class="math inline">\((\sigma=2, \rho=.95)\)</span>, respectively. The mode is indicated by a red dot.</figcaption>
+    </figure>
+    <h3 id="special-case-1-xi-and-eta-are-perfectly-correlated">Special Case 1: <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> are perfectly correlated</h3>
+    <p>The special case where <span class="math inline">\(\omega=0\)</span> corresponds to <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> being perfectly correlated. In this case <span class="math inline">\(y_\infty\)</span> is <a href="https://en.wikipedia.org/wiki/Inverse-gamma_distribution">Inverse Gamma-distributed</a><a href="#fn9" class="footnote-ref" id="fnref9"><sup>9</sup></a>. To describe the distribution of <span class="math inline">\(x_\infty\)</span>, we may assume without loss of generality that <span class="math inline">\(\rho=1\)</span>. Then <span class="math inline">\(x_\infty+\tau/\sigma\)</span> is an <a href="https://en.wikipedia.org/wiki/Inverse-gamma_distribution">Inverse Gamma-distributed</a> random variable with scale <span class="math inline">\(\beta = -2\frac{ a\tau}{\sigma^3}\)</span> and shape <span class="math inline">\(\alpha = 1-2a/\sigma^2\)</span>.</p>
+    <h3 id="special-case-2-xi-and-eta-are-not-correlated">Special Case 2: <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> are <em>not</em> correlated</h3>
+    <p>In this case, <span class="math inline">\(\rho=0\)</span>, and <span class="math inline">\(x_\infty\)</span> is <a href="https://en.wikipedia.org/wiki/Student%27s_t-distribution">Student’s t-distributed</a> with <span class="math inline">\(\nu =1-\frac{2a}{\sigma^2}\)</span> degrees of freedom, location <span class="math inline">\(\mu=0\)</span>, and scale <span class="math inline">\(\sqrt{\frac{\tau^2}{\sigma^2-2a}}\)</span>.</p>
+    <!-- $\eta$ serves to time-average the solution
+    $$\hat x_t=x_0e^{(a-\sigma^2/2)t+\sigma W_t}$$
+    of the equation
+    $$d\hat x = a\hat x \:dt+\sigma \hat x \:dW$$
+    Explictly, we have
+    $$x_t = x_0e^{(a-\sigma^2/2)t+\sigma W_t} + \int_0^te^{(a-\sigma^2/2)(t-s)+\sigma (W_t-W_s)}\eta \: ds$$
 
 
-![Log Normal mixture of gaussians](.
-./images/saddle-points-and-sdg/uncorelated.png) -->
-<h2 id="how-should-we-escape-saddle-points-in-the-presence-of-noise">How should we escape saddle points in the presence of noise?</h2>
-<p>We can categorize some major strategies as follows:</p>
-<ul>
-<li><h4 id="decrease-the-attractive-noise">Decrease the attractive noise</h4>
-<ul>
-<li><a href="#DEC_ATT_NOISE">Increase the minibatch size</a></li>
-<li><a href="#DEC_ATT_NOISE">Decrease/Anneal the learning rate</a></li>
-<li><a href="#SVRG">Stochastic Variance Reduction Gradient Descent</a></li>
-</ul></li>
-<li><h4 id="increase-the-diffusive-noise">Increase the diffusive noise</h4>
-<ul>
-<li><a href="#PSGD">Perturbed Stochastic Gradient Descent</a></li>
-</ul></li>
-<li><h4 id="do-not-use-a-smooth-loss-function">Do not use a smooth loss function</h4>
-<ul>
-<li><a href="#USE_RELU">Use ReLu’s</a></li>
-</ul></li>
-</ul>
-<h2 id="DEC_ATT_NOISE">Basic means to escape saddle points:</h2>
-<p>Some basic methods to decrease the attractive noise are to:</p>
-<ul>
-<li><h5 id="increase-the-minibatch-size.">Increase the minibatch size.</h5>
-<ul>
-<li>Increasing the minibatch size by a factor of <span class="math inline">\(\alpha\)</span> decreases the attractive noise by a factor of <span class="math inline">\(\frac{1}{\sqrt{\alpha}}\)</span> which in turn decreases the odds of becoming stuck at the saddle point. In more detail, recall that the saddle point ceases to be attractive when <span class="math inline">\(\frac{\sigma^2}{2} &lt; a\)</span>. Increasing the minibatch by a factor of <span class="math inline">\(\alpha\)</span> scales <span class="math inline">\(\sigma\)</span> to <span class="math inline">\(\frac{\sigma}{\sqrt{\alpha}}\)</span>. Thus for <span class="math inline">\(\frac{\sigma^2}{2a} &lt; \alpha\)</span>, we expect to escape the saddle point. Unfortunately, the computational cost of each gradient step roughly increases by a factor of <span class="math inline">\(\alpha\)</span> as well.</li>
-</ul></li>
-<li><h5 id="decreaseanneal-the-learning-rate.">Decrease/Anneal the learning rate.</h5>
-<ul>
-<li>Scaling the gradient descent updates by a learning rate of <span class="math inline">\(\frac{1}{\alpha}\)</span> scales both <span class="math inline">\(a\)</span> and <span class="math inline">\(\sigma\)</span> by <span class="math inline">\(\frac{1}{\alpha}\)</span>. In particular, the saddle point will cease to be attractive if <span class="math inline">\(\frac{a}{\alpha}&gt;  \frac{1}{2}\big(\frac{\sigma}{\alpha}\big)^2\)</span>. Thus, for learning rates <span class="math inline">\(\frac{1}{\alpha}&lt; \frac{2a}{\sigma^2}\)</span>, stochastic gradient descent should escape the saddle point. Indeed we will almost surely escape saddle points and succeed in converging to a local minima if we appropriately anneal the learning rate<a href="#fn10" class="footnote-ref" id="fnref10"><sup>10</sup></a>. The downside is that if the learning rate is too small, training may take overly long (it roughly scales the training time by a factor of <span class="math inline">\(\alpha\)</span>).</li>
-</ul></li>
-</ul>
-<h2 id="SVRG">Stochastic Variance Reduction Gradient Descent</h2>
-<p>Stochastic Variance Reduction Gradient Descent (SVRG)<a href="#fn11" class="footnote-ref" id="fnref11"><sup>11</sup></a> reduce the variance of stochastic gradient descent by modifying the procedure as follows: given a “landmark point” <span class="math inline">\(\tilde x\)</span> and the full gradient <span class="math inline">\(\mathbb{E}(\nabla f(\tilde x))\)</span> at that landmark, we make gradient updates at the location <span class="math inline">\(x\)</span> using the following <em>variance-reduced</em> gradient: <span class="math display">\[\nabla_{VR,\tilde x}\: f(x):= \nabla f(x) + 
+    ![Log Normal mixture of gaussians](.
+    ./images/saddle-points-and-sdg/uncorelated.png) -->
+    <h2 id="how-should-we-escape-saddle-points-in-the-presence-of-noise">How should we escape saddle points in the presence of noise?</h2>
+    <p>We can categorize some major strategies as follows:</p>
+    <ul>
+        <li><h4 id="decrease-the-attractive-noise">Decrease the attractive noise</h4>
+            <ul>
+                <li><a href="#DEC_ATT_NOISE">Increase the minibatch size</a></li>
+                <li><a href="#DEC_ATT_NOISE">Decrease/Anneal the learning rate</a></li>
+                <li><a href="#SVRG">Stochastic Variance Reduction Gradient Descent</a></li>
+            </ul></li>
+        <li><h4 id="increase-the-diffusive-noise">Increase the diffusive noise</h4>
+            <ul>
+                <li><a href="#PSGD">Perturbed Stochastic Gradient Descent</a></li>
+            </ul></li>
+        <li><h4 id="do-not-use-a-smooth-loss-function">Do not use a smooth loss function</h4>
+            <ul>
+                <li><a href="#USE_RELU">Use ReLu’s</a></li>
+            </ul></li>
+    </ul>
+    <h2 id="DEC_ATT_NOISE">Basic means to escape saddle points:</h2>
+    <p>Some basic methods to decrease the attractive noise are to:</p>
+    <ul>
+        <li><h5 id="increase-the-minibatch-size.">Increase the minibatch size.</h5>
+            <ul>
+                <li>Increasing the minibatch size by a factor of <span class="math inline">\(\alpha\)</span> decreases the attractive noise by a factor of <span class="math inline">\(\frac{1}{\sqrt{\alpha}}\)</span> which in turn decreases the odds of becoming stuck at the saddle point. In more detail, recall that the saddle point ceases to be attractive when <span class="math inline">\(\frac{\sigma^2}{2} &lt; a\)</span>. Increasing the minibatch by a factor of <span class="math inline">\(\alpha\)</span> scales <span class="math inline">\(\sigma\)</span> to <span class="math inline">\(\frac{\sigma}{\sqrt{\alpha}}\)</span>. Thus for <span class="math inline">\(\frac{\sigma^2}{2a} &lt; \alpha\)</span>, we expect to escape the saddle point. Unfortunately, the computational cost of each gradient step roughly increases by a factor of <span class="math inline">\(\alpha\)</span> as well.</li>
+            </ul></li>
+        <li><h5 id="decreaseanneal-the-learning-rate.">Decrease/Anneal the learning rate.</h5>
+            <ul>
+                <li>Scaling the gradient descent updates by a learning rate of <span class="math inline">\(\frac{1}{\alpha}\)</span> scales both <span class="math inline">\(a\)</span> and <span class="math inline">\(\sigma\)</span> by <span class="math inline">\(\frac{1}{\alpha}\)</span>. In particular, the saddle point will cease to be attractive if <span class="math inline">\(\frac{a}{\alpha}&gt;  \frac{1}{2}\big(\frac{\sigma}{\alpha}\big)^2\)</span>. Thus, for learning rates <span class="math inline">\(\frac{1}{\alpha}&lt; \frac{2a}{\sigma^2}\)</span>, stochastic gradient descent should escape the saddle point. Indeed we will almost surely escape saddle points and succeed in converging to a local minima if we appropriately anneal the learning rate<a href="#fn10" class="footnote-ref" id="fnref10"><sup>10</sup></a>. The downside is that if the learning rate is too small, training may take overly long (it roughly scales the training time by a factor of <span class="math inline">\(\alpha\)</span>).</li>
+            </ul></li>
+    </ul>
+    <h2 id="SVRG">Stochastic Variance Reduction Gradient Descent</h2>
+    <p>Stochastic Variance Reduction Gradient Descent (SVRG)<a href="#fn11" class="footnote-ref" id="fnref11"><sup>11</sup></a> reduce the variance of stochastic gradient descent by modifying the procedure as follows: given a “landmark point” <span class="math inline">\(\tilde x\)</span> and the full gradient <span class="math inline">\(\mathbb{E}(\nabla f(\tilde x))\)</span> at that landmark, we make gradient updates at the location <span class="math inline">\(x\)</span> using the following <em>variance-reduced</em> gradient: <span class="math display">\[\nabla_{VR,\tilde x}\: f(x):= \nabla f(x) +
 \overset{SVRG-modification}{\overbrace{
 \big(\mathbb{E}(\nabla f(\tilde x))-\nabla f(\tilde x)\big)}}.\]</span> Notice that this modified “variance-reduced” gradient has the same expected value as the original noisy gradient, since the modification (the second term) has an expected value of zero. However, the variance of <span class="math inline">\(\nabla_{VR, \tilde x}\: f(x)\)</span> is much less than <span class="math inline">\(\nabla f(x)\)</span> when <span class="math inline">\(x\)</span> is near <span class="math inline">\(\tilde x\)</span>, as becomes clear by regrouping the terms as follows: <span class="math display">\[\nabla_{VR,\tilde x}\: f(x):= \overset{A}{\overbrace{
 \big(\nabla f(x)-\nabla f(\tilde x)\big)}} + 
 \overset{B}{\overbrace{\mathbb{E}(\nabla f(\tilde x))}}.\]</span> Term <span class="math inline">\(B\)</span> has zero variance, while term <span class="math inline">\(A\)</span> is the difference of two postively correlated random variables, so it has low variance. Indeed, when <span class="math inline">\(x = \tilde x\)</span>, the variance of <span class="math inline">\(A\)</span> is zero.</p>
-<p>Since we need the landmark point <span class="math inline">\(\tilde x\)</span> to be near <span class="math inline">\(x\)</span>, we simply update it periodically (for example at the start of every epoch).</p>
-<p>Given that SVRG reduces the variance of the gradient, we should expect it to escape saddle points. Let’s analyze it from the perspective of the machinery developed above. We have: <span class="math display">\[\begin{align}
+    <p>Since we need the landmark point <span class="math inline">\(\tilde x\)</span> to be near <span class="math inline">\(x\)</span>, we simply update it periodically (for example at the start of every epoch).</p>
+    <p>Given that SVRG reduces the variance of the gradient, we should expect it to escape saddle points. Let’s analyze it from the perspective of the machinery developed above. We have: <span class="math display">\[\begin{align}
 \nabla f(x) &amp;= -ax \:dt-\sigma x \:dW -\tau\: dU,\\
 -\nabla f(\tilde x) &amp;= a\tilde x \:dt+\sigma \tilde x \:dW +\tau\: dU,\text{ and}\\
 \mathbb{E}\big(\nabla f(\tilde x)\big) &amp;= -a\tilde x \:dt\quad\text{ since 
 }\mathbb{E}(dW)=\mathbb{E}(dU)=0\\
 \end{align}\]</span> so <span class="math display">\[\nabla_{VR,\tilde x}\: f(x) = -ax \:dt-\sigma x \:dW + \sigma 
 \tilde x \:dW,\]</span> and the stochastic differential equation <span class="math inline">\(dx=-\nabla_{VR,\tilde x}\: f(x)\)</span> becomes <span class="math display">\[dx = ax \:dt+\sigma x \:dW +\tau' \:dW,\]</span> where <span class="math inline">\(\tau'=- \sigma \tilde x\)</span>. We recognize this SDE as the special case where the attractive and diffusive noise are perfectly correlated; so <span class="math inline">\(x_\infty+\tau'/\sigma=x_\infty-\tilde x\)</span> is an <a href="https://en.wikipedia.org/wiki/Inverse-gamma_distribution">Inverse Gamma-distributed</a> random variable with scale <span class="math inline">\(\beta = -2\frac{ a\tau'}{\sigma^3} = 2\frac{ a\tilde x}{\sigma^2}\)</span> and shape <span class="math inline">\(\alpha = 1-2a/\sigma^2\)</span>. In particular, with probability 1, <span class="math display">\[\lvert x_\infty\rvert &gt;\lvert \tilde x\rvert,\]</span> so we expect to move further from the saddle point every time we update the landmark point <span class="math inline">\(\tilde x\)</span>. Moreover, since the scale <span class="math inline">\(\beta\)</span> of the inverse gamma-distribution is proportional to <span class="math inline">\(\tilde x\)</span>, heuristically, we expect the to escape no slower than gometrically in the updates of the landmark point, at a rate proportional to <span class="math inline">\(\beta/\tilde x = 2\frac{a}{\sigma^2}\)</span>.</p>
-<!--Suppose you have $N$ training samples.
+    <!--Suppose you have $N$ training samples.
 
-until converged:<br>
-$\quad\quad$ store the current location $x$ as a landmark:<br>
-$\quad\quad$ set $x_{*} := x$<br>
-$\quad\quad$ compute the full gradient $\nabla f_{full}(x_*)$ at $x_*$<br>
-$\quad\quad$ for i = 1 ... N:<br>
-$\quad\quad\quad\quad$ compute the approximate gradient $\nabla f_{approx}(x)$ at x<br>
-$\quad\quad\quad\quad$ compute the approximate gradient $\nabla f_{approx}(x_*)$ at $x_*$<br>
-$\quad\quad\quad\quad$ set $\nabla f_{VR} := \nabla f_{approx}(x)-\nabla f_{approx}(x_*)+\nabla f_{full}(x_*)$<br>
-$\quad\quad\quad\quad$ set $x := x - \nabla f_{VR}$
-    
-    
+    until converged:<br>
+    $\quad\quad$ store the current location $x$ as a landmark:<br>
+    $\quad\quad$ set $x_{*} := x$<br>
+    $\quad\quad$ compute the full gradient $\nabla f_{full}(x_*)$ at $x_*$<br>
+    $\quad\quad$ for i = 1 ... N:<br>
+    $\quad\quad\quad\quad$ compute the approximate gradient $\nabla f_{approx}(x)$ at x<br>
+    $\quad\quad\quad\quad$ compute the approximate gradient $\nabla f_{approx}(x_*)$ at $x_*$<br>
+    $\quad\quad\quad\quad$ set $\nabla f_{VR} := \nabla f_{approx}(x)-\nabla f_{approx}(x_*)+\nabla f_{full}(x_*)$<br>
+    $\quad\quad\quad\quad$ set $x := x - \nabla f_{VR}$
 
-- Interestingly, SVRGD serves correlate the two noises $\xi$ and $\eta$ in the 
-equation $$dx = ax \:dt+\xi x \:dt +\eta\: dt$$
-- Infact, at the end of every inner loop $x-x_*$ exhibits an inverse gamma 
-distribution with scale proportionate to the distance from $x_*$ to the saddle 
-point: -->
-<figure>
-<img src="../images/saddle-points-and-sdg/stat_dist_svrg.png" alt="A plot of the distribution of x_\infty where a=1 and \sigma=2. The orange line indicates the location of the landmark point \tilde x=1. The saddle point is located at the origin. Notice that we expect x_\infty to lie strictly further from the saddle point than the landmark point \tilde x." /><figcaption>A plot of the distribution of <span class="math inline">\(x_\infty\)</span> where <span class="math inline">\(a=1\)</span> and <span class="math inline">\(\sigma=2\)</span>. The orange line indicates the location of the landmark point <span class="math inline">\(\tilde x=1\)</span>. The saddle point is located at the origin. Notice that we expect <span class="math inline">\(x_\infty\)</span> to lie strictly further from the saddle point than the landmark point <span class="math inline">\(\tilde x\)</span>.</figcaption>
-</figure>
-<!-- ## SVGRD guarantees that you will escape the saddle point
 
-Infact, you expect to escape geometrically (in the outer loop)
 
-### Problems:
-- Unfortuately, you may need to compute the full gradient (updating $x_*$) 
-before each foolproof step away from the saddle point.
-- This results in the same computational cost as gradient descent (which is 
-considered too expensive for training deep neural networks). -->
-<h2 id="PSGD">Perturbed Stochastic Gradient Descent</h2>
-<p>Perturbed stochastic gradient descent<a href="#fn12" class="footnote-ref" id="fnref12"><sup>12</sup></a> effectively increases the intensity <span class="math inline">\(\tau\)</span> of the diffusive noise in the equation <span class="math display">\[dx = ax \:dt+\sigma x \:dW +\tau\: dU\]</span> while keeping the intensity <span class="math inline">\(\sigma\)</span> of the attractive noise as well as the deterministic growth rate <span class="math inline">\(a\)</span> fixed. In particular, <span class="math inline">\(x_\infty\)</span> remains Pearson distributed.</p>
-<p>Since the scale of the distribution of <span class="math inline">\(x_\infty\)</span> depends linearly on <span class="math inline">\(\tau\)</span>, it follows that <span class="math inline">\(x_\infty\)</span> will disperse proportionately. Thus, if we rescale <span class="math inline">\(\tau\)</span> by a factor of <span class="math inline">\(\alpha\)</span>, then, intuitively, <span class="math inline">\(\mathbb{P}(\lvert \lim_{t\to\infty}x_t \rvert &lt; R)\)</span> will scale on the order of <span class="math inline">\(\frac{1}{\alpha}\)</span>.</p>
-<p>In a practical setting, the loss function will only be well approximated by the local saddle point model within a finite radius <span class="math inline">\(R\)</span> of the saddle point, so the odds of being trapped there will decrease roughly by a factor of <span class="math inline">\(\frac{1}{\alpha}\)</span>. Summarizing this heuristic analysis, Perturbed Stochastic Gradient Descent should be an effective means of escaping saddle points in the setting of a noisy loss function.</p>
-<h2 id="USE_RELU">Use ReLu’s</h2>
-<p>Regularized linear units result in piecewise linear loss functions. In theory, this dramatically changes the dynamics and eliminates the attractive noise in the local update equation (though some diffusive noise may remain). In practice, if the piecewise linear loss function is sufficiently fine and well approximated by a smooth loss, then the above analysis may still indicate that the noise may cause stochastic gradient descent to suffer near saddle points. Of course, it would be worthwhile to investigate the situation further.</p>
-<figure>
-<img src="../images/saddle-points-and-sdg/relu.png" alt="Stochastic gradient descent near a piecewise linear saddle point." /><figcaption>Stochastic gradient descent near a piecewise linear saddle point.</figcaption>
-</figure>
-<h2 id="open-questions">Open questions</h2>
-<p>In this post we examined the impact of noise on stochastic gradient descent near saddle points by looking at the limiting <span class="math inline">\(t\to\infty\)</span> stationary distribution. However, the local model <span class="math display">\[f(\vec{\bf{x}}) \simeq \frac{\pm a_1}{2}x_1^2+\dots +\frac{\pm a_m}{2}x_m^2\]</span> for the loss function near a saddle point is just that: a <em>local</em> model. In practice, there will be a radius <span class="math inline">\(R\)</span> outside of which the local model is no longer an accurate approximation of loss function. It would be worthwhile exploring when trajectories <span class="math inline">\(x_t\)</span> of the stochastic differential equation <span class="math display">\[dx = ax \:dt+\sigma x \:dW +\tau\: dU\]</span> first exceed <span class="math inline">\(R\)</span> in absolute value. For instance, the following plot gives an example of such a trajectory; notice that while it spends much of its time near zero, it makes some occasional very large forays away from zero; any such foray might be sufficient to escape the saddle point.</p>
-<figure>
-<img src="../images/saddle-points-and-sdg/gbm_freq_exc.png" alt="A sample plot of x_t when a=0.5, \sigma = 1.2, and \tau=0." /><figcaption>A sample plot of <span class="math inline">\(x_t\)</span> when <span class="math inline">\(a=0.5\)</span>, <span class="math inline">\(\sigma = 1.2\)</span>, and <span class="math inline">\(\tau=0\)</span>.</figcaption>
-</figure>
-<p>In future work we would also like to explore whether or not saddle points in typical neural networks have strong attractive noise, and how the size and depth of such networks affects the intensity of that attractive noise. For instance, there need only be a single strongly repulsive direction from a saddle point in order to escape; perhaps increasing the dimensionality of a network also increases the odds that such a direction exist.</p>
-<h2 id="Appendix_A">Appendix A: Solving for the stationary distribution</h2>
-<p>The <a href="https://en.wikipedia.org/wiki/Fokker%E2%80%93Planck_equation">Fokker-Planck equation</a> equation says that the probability density <span class="math inline">\(p(y, t)\)</span> to the stochastic differential equation <span class="math display">\[dy  = a(y-\mu)\:dt +\sigma y\:dW+\omega\: dV\]</span> solves the PDE <span class="math display">\[{\frac {\partial }{\partial t}}p(y, t)=-{\frac 
+    - Interestingly, SVRGD serves correlate the two noises $\xi$ and $\eta$ in the
+    equation $$dx = ax \:dt+\xi x \:dt +\eta\: dt$$
+    - Infact, at the end of every inner loop $x-x_*$ exhibits an inverse gamma
+    distribution with scale proportionate to the distance from $x_*$ to the saddle
+    point: -->
+    <figure>
+        <img src="../images/saddle-points-and-sdg/stat_dist_svrg.png" alt="A plot of the distribution of x_\infty where a=1 and \sigma=2. The orange line indicates the location of the landmark point \tilde x=1. The saddle point is located at the origin. Notice that we expect x_\infty to lie strictly further from the saddle point than the landmark point \tilde x." /><figcaption>A plot of the distribution of <span class="math inline">\(x_\infty\)</span> where <span class="math inline">\(a=1\)</span> and <span class="math inline">\(\sigma=2\)</span>. The orange line indicates the location of the landmark point <span class="math inline">\(\tilde x=1\)</span>. The saddle point is located at the origin. Notice that we expect <span class="math inline">\(x_\infty\)</span> to lie strictly further from the saddle point than the landmark point <span class="math inline">\(\tilde x\)</span>.</figcaption>
+    </figure>
+    <!-- ## SVGRD guarantees that you will escape the saddle point
+
+    Infact, you expect to escape geometrically (in the outer loop)
+
+    ### Problems:
+    - Unfortuately, you may need to compute the full gradient (updating $x_*$)
+    before each foolproof step away from the saddle point.
+    - This results in the same computational cost as gradient descent (which is
+    considered too expensive for training deep neural networks). -->
+    <h2 id="PSGD">Perturbed Stochastic Gradient Descent</h2>
+    <p>Perturbed stochastic gradient descent<a href="#fn12" class="footnote-ref" id="fnref12"><sup>12</sup></a> effectively increases the intensity <span class="math inline">\(\tau\)</span> of the diffusive noise in the equation <span class="math display">\[dx = ax \:dt+\sigma x \:dW +\tau\: dU\]</span> while keeping the intensity <span class="math inline">\(\sigma\)</span> of the attractive noise as well as the deterministic growth rate <span class="math inline">\(a\)</span> fixed. In particular, <span class="math inline">\(x_\infty\)</span> remains Pearson distributed.</p>
+    <p>Since the scale of the distribution of <span class="math inline">\(x_\infty\)</span> depends linearly on <span class="math inline">\(\tau\)</span>, it follows that <span class="math inline">\(x_\infty\)</span> will disperse proportionately. Thus, if we rescale <span class="math inline">\(\tau\)</span> by a factor of <span class="math inline">\(\alpha\)</span>, then, intuitively, <span class="math inline">\(\mathbb{P}(\lvert \lim_{t\to\infty}x_t \rvert &lt; R)\)</span> will scale on the order of <span class="math inline">\(\frac{1}{\alpha}\)</span>.</p>
+    <p>In a practical setting, the loss function will only be well approximated by the local saddle point model within a finite radius <span class="math inline">\(R\)</span> of the saddle point, so the odds of being trapped there will decrease roughly by a factor of <span class="math inline">\(\frac{1}{\alpha}\)</span>. Summarizing this heuristic analysis, Perturbed Stochastic Gradient Descent should be an effective means of escaping saddle points in the setting of a noisy loss function.</p>
+    <h2 id="USE_RELU">Use ReLu’s</h2>
+    <p>Regularized linear units result in piecewise linear loss functions. In theory, this dramatically changes the dynamics and eliminates the attractive noise in the local update equation (though some diffusive noise may remain). In practice, if the piecewise linear loss function is sufficiently fine and well approximated by a smooth loss, then the above analysis may still indicate that the noise may cause stochastic gradient descent to suffer near saddle points. Of course, it would be worthwhile to investigate the situation further.</p>
+    <figure>
+        <img src="../images/saddle-points-and-sdg/relu.png" alt="Stochastic gradient descent near a piecewise linear saddle point." /><figcaption>Stochastic gradient descent near a piecewise linear saddle point.</figcaption>
+    </figure>
+    <h2 id="open-questions">Open questions</h2>
+    <p>In this post we examined the impact of noise on stochastic gradient descent near saddle points by looking at the limiting <span class="math inline">\(t\to\infty\)</span> stationary distribution. However, the local model <span class="math display">\[f(\vec{\bf{x}}) \simeq \frac{\pm a_1}{2}x_1^2+\dots +\frac{\pm a_m}{2}x_m^2\]</span> for the loss function near a saddle point is just that: a <em>local</em> model. In practice, there will be a radius <span class="math inline">\(R\)</span> outside of which the local model is no longer an accurate approximation of loss function. It would be worthwhile exploring when trajectories <span class="math inline">\(x_t\)</span> of the stochastic differential equation <span class="math display">\[dx = ax \:dt+\sigma x \:dW +\tau\: dU\]</span> first exceed <span class="math inline">\(R\)</span> in absolute value. For instance, the following plot gives an example of such a trajectory; notice that while it spends much of its time near zero, it makes some occasional very large forays away from zero; any such foray might be sufficient to escape the saddle point.</p>
+    <figure>
+        <img src="../images/saddle-points-and-sdg/gbm_freq_exc.png" alt="A sample plot of x_t when a=0.5, \sigma = 1.2, and \tau=0." /><figcaption>A sample plot of <span class="math inline">\(x_t\)</span> when <span class="math inline">\(a=0.5\)</span>, <span class="math inline">\(\sigma = 1.2\)</span>, and <span class="math inline">\(\tau=0\)</span>.</figcaption>
+    </figure>
+    <p>In future work we would also like to explore whether or not saddle points in typical neural networks have strong attractive noise, and how the size and depth of such networks affects the intensity of that attractive noise. For instance, there need only be a single strongly repulsive direction from a saddle point in order to escape; perhaps increasing the dimensionality of a network also increases the odds that such a direction exist.</p>
+    <h2 id="Appendix_A">Appendix A: Solving for the stationary distribution</h2>
+    <p>The <a href="https://en.wikipedia.org/wiki/Fokker%E2%80%93Planck_equation">Fokker-Planck equation</a> equation says that the probability density <span class="math inline">\(p(y, t)\)</span> to the stochastic differential equation <span class="math display">\[dy  = a(y-\mu)\:dt +\sigma y\:dW+\omega\: dV\]</span> solves the PDE <span class="math display">\[{\frac {\partial }{\partial t}}p(y, t)=-{\frac
 {\partial }{\partial y}}\left[A (y)p(y,t)\right]+{\frac {\partial 
 ^{2}}{\partial y^{2}}}\left[D(y)p(y,t)\right],\]</span> where <span class="math inline">\(A(y) = a(y-\mu)\)</span> and <span class="math inline">\(D(y)=\frac{1}{2}(\sigma^2 y^2+\omega^2)\)</span>. For a stationary distribution, the time derivative on the left-hand-side vanishes. Thus, we have <span class="math inline">\(\frac {\partial }{\partial y}J(y) = 0\)</span>, where <span class="math display">\[J(y)=-A(y)p(y)
 +\frac{\partial}{\partial y} [D(y)p(y)].\]</span> Since <span class="math inline">\(J\)</span> is constant and both <span class="math inline">\(p\)</span> and <span class="math inline">\(\frac {\partial p}{\partial t}\)</span> vanish at <span class="math inline">\(\infty\)</span>, we must have <span class="math inline">\(J(y)=0\)</span>, which yields the ODE: <span class="math display">\[\frac{\partial}{\partial y} [D(y)p(y)]=A(y)p(y).\]</span> This, in turn, can be solved by standard techniques to find the solution <span class="math display">\[\left(y^{2} \sigma^{2} + \omega^{2}\right)
@@ -287,28 +287,28 @@ considered too expensive for training deep neural networks). -->
  {\omega \sigma}},\]</span> up to a constant multiple. From the ODE, we also see that <span class="math display">\[A(y)-\frac{\partial D(y)}{\partial y} =0
 \quad\quad\Leftrightarrow\quad\quad
 \frac{\partial p(y)}{\partial y}=0,\]</span> which leads to the linear equation <span class="math inline">\(0= y(a- \sigma^{2}) - a\mu\)</span> for the mode of <span class="math inline">\(p\)</span>.</p>
-<section class="footnotes">
-<hr />
-<ol>
-<li id="fn1"><p>That is <span class="math inline">\(\vec{\bf{x}}\)</span> is a critical point if <span class="math inline">\(\nabla f=0\)</span> at <span class="math inline">\(\vec{\bf{x}}\)</span>. Said differently <span class="math inline">\(f\)</span> is flat to first order near <span class="math inline">\(\vec{\bf{x}}\)</span>.<a href="#fnref1" class="footnote-back">↩</a></p></li>
-<li id="fn2"><p>Lee JD, Simchowitz M, Jordan MI, Recht B. Gradient Descent Converges to Minimizers. 2016;(Equation 1):1–11.<a href="#fnref2" class="footnote-back">↩</a></p></li>
-<li id="fn3"><p>By gently shaking the surface: that is, we translate it by a normally distributed random variable with standard deviation 1.<a href="#fnref3" class="footnote-back">↩</a></p></li>
-<li id="fn4"><p>By shaking the surface: that is, we translate it by a normally distributed random variable with standard deviation 2.<a href="#fnref4" class="footnote-back">↩</a></p></li>
-<li id="fn5"><p>On the other hand, the average value of the scaling factors is 1. Indeed the expected value of <span class="math inline">\(x_n\)</span> is <span class="math inline">\(x_0\)</span> for all <span class="math inline">\(n\)</span>.<a href="#fnref5" class="footnote-back">↩</a></p></li>
-<li id="fn6"><p>So for any times <span class="math inline">\(t\)</span> and <span class="math inline">\(s\)</span>, the variances are <span class="math inline">\(\mathbb{E} \big((W_t-W_s)^2\big)=(t-s)\)</span>, and <span class="math inline">\(\mathbb{E}\big((U_t-U_s)^2\big)=(t-s)\)</span>, while the correlation is <span class="math inline">\(\mathbb{E}\big((W_t-W_s)(U_t-U_s)\big) = \rho(t-s)\)</span>.<a href="#fnref6" class="footnote-back">↩</a></p></li>
-<li id="fn7"><p>Note that <span class="math inline">\(-\frac{\sigma^2}{2}\)</span> is the same convergence rate that appeared in the discrete case.<a href="#fnref7" class="footnote-back">↩</a></p></li>
-<li id="fn8"><p>Dufresne D. The distribution of a perpetuity, with applications to risk theory and pension funding. Vol. 1990, Scandinavian Actuarial Journal. 1990. p. 39–79.<a href="#fnref8" class="footnote-back">↩</a></p></li>
-<li id="fn9"><p>Dufresne D. The distribution of a perpetuity, with applications to risk theory and pension funding. Vol. 1990, Scandinavian Actuarial Journal. 1990. p. 39–79.<a href="#fnref9" class="footnote-back">↩</a></p></li>
-<li id="fn10"><p>Pemantle R. Nonconvergence to unstable points in urn models and stochastic approximations. Ann Probab [Internet]. 1990;18(2):698–712. Available from: http://www.jstor.org/stable/2238700%5Cnhttp://projecteuclid.org/euclid.aoms/1177705148<a href="#fnref10" class="footnote-back">↩</a></p></li>
-<li id="fn11"><p>Johnson R, Zhang T. Accelerating Stochastic Gradient Descent using Predictive Variance Reduction. Proc Conf Neural Inf Process Syst [Internet]. 2013;1(3):315–23. Available <a href="https://papers.nips.cc/paper/4937-accelerating-stochastic-gradient-descent-using-predictive-variance-reduction.pdf%0Ahttp://papers.nips.cc/paper/4937-accelerating-stochastic-gradient-descent-using-predictive-variance-reduction.pdf%5Cnhttp://papers.nips.cc">here</a><a href="#fnref11" class="footnote-back">↩</a></p></li>
-<li id="fn12"><p>Jin C, Ge R, Netrapalli P, Kakade SM, Jordan MI. How to Escape Saddle Points Efficiently. 2017;1–35. Available <a href="http://arxiv.org/abs/1703.00887">here</a><a href="#fnref12" class="footnote-back">↩</a></p></li>
-</ol>
-</section>
+    <section class="footnotes">
+        <hr />
+        <ol>
+            <li id="fn1"><p>That is <span class="math inline">\(\vec{\bf{x}}\)</span> is a critical point if <span class="math inline">\(\nabla f=0\)</span> at <span class="math inline">\(\vec{\bf{x}}\)</span>. Said differently <span class="math inline">\(f\)</span> is flat to first order near <span class="math inline">\(\vec{\bf{x}}\)</span>.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+            <li id="fn2"><p>Lee JD, Simchowitz M, Jordan MI, Recht B. Gradient Descent Converges to Minimizers. 2016;(Equation 1):1–11.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+            <li id="fn3"><p>By gently shaking the surface: that is, we translate it by a normally distributed random variable with standard deviation 1.<a href="#fnref3" class="footnote-back">↩</a></p></li>
+            <li id="fn4"><p>By shaking the surface: that is, we translate it by a normally distributed random variable with standard deviation 2.<a href="#fnref4" class="footnote-back">↩</a></p></li>
+            <li id="fn5"><p>On the other hand, the average value of the scaling factors is 1. Indeed the expected value of <span class="math inline">\(x_n\)</span> is <span class="math inline">\(x_0\)</span> for all <span class="math inline">\(n\)</span>.<a href="#fnref5" class="footnote-back">↩</a></p></li>
+            <li id="fn6"><p>So for any times <span class="math inline">\(t\)</span> and <span class="math inline">\(s\)</span>, the variances are <span class="math inline">\(\mathbb{E} \big((W_t-W_s)^2\big)=(t-s)\)</span>, and <span class="math inline">\(\mathbb{E}\big((U_t-U_s)^2\big)=(t-s)\)</span>, while the correlation is <span class="math inline">\(\mathbb{E}\big((W_t-W_s)(U_t-U_s)\big) = \rho(t-s)\)</span>.<a href="#fnref6" class="footnote-back">↩</a></p></li>
+            <li id="fn7"><p>Note that <span class="math inline">\(-\frac{\sigma^2}{2}\)</span> is the same convergence rate that appeared in the discrete case.<a href="#fnref7" class="footnote-back">↩</a></p></li>
+            <li id="fn8"><p>Dufresne D. The distribution of a perpetuity, with applications to risk theory and pension funding. Vol. 1990, Scandinavian Actuarial Journal. 1990. p. 39–79.<a href="#fnref8" class="footnote-back">↩</a></p></li>
+            <li id="fn9"><p>Dufresne D. The distribution of a perpetuity, with applications to risk theory and pension funding. Vol. 1990, Scandinavian Actuarial Journal. 1990. p. 39–79.<a href="#fnref9" class="footnote-back">↩</a></p></li>
+            <li id="fn10"><p>Pemantle R. Nonconvergence to unstable points in urn models and stochastic approximations. Ann Probab [Internet]. 1990;18(2):698–712. Available from: http://www.jstor.org/stable/2238700%5Cnhttp://projecteuclid.org/euclid.aoms/1177705148<a href="#fnref10" class="footnote-back">↩</a></p></li>
+            <li id="fn11"><p>Johnson R, Zhang T. Accelerating Stochastic Gradient Descent using Predictive Variance Reduction. Proc Conf Neural Inf Process Syst [Internet]. 2013;1(3):315–23. Available <a href="https://papers.nips.cc/paper/4937-accelerating-stochastic-gradient-descent-using-predictive-variance-reduction.pdf%0Ahttp://papers.nips.cc/paper/4937-accelerating-stochastic-gradient-descent-using-predictive-variance-reduction.pdf%5Cnhttp://papers.nips.cc">here</a><a href="#fnref11" class="footnote-back">↩</a></p></li>
+            <li id="fn12"><p>Jin C, Ge R, Netrapalli P, Kakade SM, Jordan MI. How to Escape Saddle Points Efficiently. 2017;1–35. Available <a href="http://arxiv.org/abs/1703.00887">here</a><a href="#fnref12" class="footnote-back">↩</a></p></li>
+        </ol>
+    </section>
 
-        </div>
-        <div id="footer">
-            Site proudly generated by
-            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
-        </div>
-    </body>
+</div>
+<div id="footer">
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+</div>
+</body>
 </html>
