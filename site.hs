@@ -2,7 +2,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 import           Data.Monoid (mappend)
 import           Hakyll
+import           Hakyll.Web.Pandoc.Biblio
 import           Text.Pandoc.Options
+import           Control.Monad (liftM)
 
 
 --------------------------------------------------------------------------------
@@ -19,20 +21,51 @@ pandocMathCompiler =
                         }
     in pandocCompilerWith defaultHakyllReaderOptions writerOptions
 
+-- bibtexCompiler :: String -> String -> Compiler (Item String)
+-- bibtexCompiler cslFileName bibFileName = do
+--     csl <- load $ fromFilePath cslFileName
+--     bib <- load $ fromFilePath bibFileName
+--     getResourceBody
+--         >>= readPandocBiblio def csl bib
+--         >>= return . writePandoc
+
 --------------------------------------------------------------------------------
-    
+
+config :: Configuration
+config = defaultConfiguration
+    {
+        previewPort          = 5000
+    }
+
+--------------------------------------------------------------------------------
+
+
 main :: IO ()
-main = hakyll $ do
+main = hakyllWith config $ do
 
     -- Move favicon to root
     match "images/favicon.ico" $ do
         route $ constRoute "favicon.ico"
         compile copyFileCompiler
 
-
     match "images/**" $ do
         route   idRoute
         compile copyFileCompiler
+
+    match "static/**" $ do
+        route   idRoute
+        compile copyFileCompiler
+
+--     match "bibliography/*.bib" $ compile $ biblioCompiler
+--     match "pages/*.csl" $ compile $ cslCompiler
+
+--     match "papers.markdown" $ do
+--         route   $ setExtension "html"
+--         compile $ bibtexCompiler
+--                   "static/csl/elsevier.csl"
+--                   "static/bib/papers.bib"
+--             >>= loadAndApplyTemplate "templates/default.html" defaultContext
+--             >>= relativizeUrls
 
     match "css/*" $ do
         route   idRoute
@@ -43,6 +76,13 @@ main = hakyll $ do
         compile $ pandocCompiler
             >>= loadAndApplyTemplate "templates/default.html" defaultContext
             >>= relativizeUrls
+
+--     match "papers.html" $ do
+--         route idRoute
+--         compile $ do
+--             getResourceBody
+--                 >>= loadAndApplyTemplate "templates/default.html" defaultContext
+--                 >>= relativizeUrls
 
     match "posts/*" $ do
         route $ setExtension "html"
