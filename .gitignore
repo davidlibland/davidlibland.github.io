@@ -21,6 +21,10 @@ cabal.project.local~
 .HTF/
 .ghc.environment.*
 
+# Intellij
+.idea
+*.iml
+
 # Hakyll
 _cache/
 _site/
