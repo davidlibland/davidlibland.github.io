@@ -1,7 +1,7 @@
 ---
 title: Contact
 ---
-<img src="./images/me/DSC_0669.jpg" width="200">
+<img src="./images/me/DSC_0669_300.jpg" width="200">
 
 I live in the San Francsico Bay Area, and can be reached at:
 <script type="text/javascript">
