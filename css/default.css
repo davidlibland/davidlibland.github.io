@@ -41,6 +41,11 @@ div#footer {
     text-align: right;
 }
 
+div.right {
+    position: absolute;
+    right: 0px;
+}
+
 h1 {
     font-size: 24px;
 }
