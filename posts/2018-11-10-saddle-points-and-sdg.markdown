@@ -449,7 +449,7 @@ Some basic methods to decrease the attractive noise are to:
      too small, training may take
      overly long (it roughly scales the training time by a factor of $\alpha$).
      
-[^pemantle]: Pemantle R. Nonconvergence to unstable points in urn models and stochastic approximations. Ann Probab [Internet]. 1990;18(2):698--712. Available from: http://www.jstor.org/stable/2238700%5Cnhttp://projecteuclid.org/euclid.aoms/1177705148
+[^pemantle]: Pemantle R. Nonconvergence to unstable points in urn models and stochastic approximations. Ann Probab [Internet]. 1990;18(2):698--712. Available [here](https://projecteuclid.org/euclid.aop/1176990853).
 
 
 ## Stochastic Variance Reduction Gradient Descent {#SVRG}
