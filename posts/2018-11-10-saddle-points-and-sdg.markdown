@@ -609,6 +609,9 @@ instance, there need only be a single strongly repulsive direction from a saddle
 escape; perhaps increasing the dimensionality of a network also increases the 
 odds that such a direction exist.
 
+I work at the [Human Diagnosis Project](https://www.humandx.org/). We are 
+looking for researchers and engineers who think outside the box.
+
 ## Appendix A: Solving for the stationary distribution  {#Appendix_A}
 The [Fokker-Planck equation](https://en.wikipedia.org/wiki/Fokker%E2%80%93Planck_equation)
 equation says that the probability density $p(y, t)$ to 
