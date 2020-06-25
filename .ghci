@@ -1,2 +1,3 @@
+:set -pgmL markdown-unlit
 :set -XOverloadedStrings
 import           Hakyll

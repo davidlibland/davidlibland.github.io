@@ -12,7 +12,7 @@ import           Control.Monad (liftM)
 pandocMathCompiler =
     let mathExtensions = [Ext_tex_math_dollars, Ext_tex_math_double_backslash,
                           Ext_latex_macros, Ext_inline_code_attributes,
-                          Ext_footnotes]
+                          Ext_footnotes, Ext_literate_haskell]
         defaultExtensions = writerExtensions defaultHakyllWriterOptions
         newExtensions = foldr enableExtension defaultExtensions mathExtensions
         writerOptions = defaultHakyllWriterOptions {
