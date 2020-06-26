@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <link rel="shortcut icon" href="../favicon.ico">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>David Li-Bland's Blog - Visualizing Sorts Through Origami</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">David Li-Bland's Blog</a>
+            </div>
+            <div id="navigation">
+                <a href="../">Home</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../archive.html">Archive</a>
+                <a href="https://math.berkeley.edu/~libland/papers.php">Papers</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Visualizing Sorts Through Origami</h1>
+
+            <div class="info">
+    Posted on June 16, 2020
+    
+</div>
+
+<p>In this post, we’ll talk about <a href="http://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/origami.pdf">Origami programming</a> (since it involves a lot of folding and unfolding). As a fun application, we’ll use it to visualize a couple sorting algorithms.</p>
+<!-- Haskell Prelude:
+```haskell
+{-# LANGUAGE UndecidableInstances #-}
+import Data.Bifunctor
+import Data.Bifoldable
+import Data.Bitraversable
+import Data.Monoid
+```
+-->
+<p>Origami programming is a generic programming pattern for recursive data types such as lists and trees:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" title="1"><span class="co">-- Lists:</span></a>
+<a class="sourceLine" id="cb1-2" title="2"><span class="kw">data</span> <span class="dt">List</span> a <span class="fu">=</span> <span class="dt">Nil</span> <span class="fu">|</span> <span class="dt">Cons</span> a (<span class="dt">List</span> a)</a>
+<a class="sourceLine" id="cb1-3" title="3"><span class="co">-- Trees:</span></a>
+<a class="sourceLine" id="cb1-4" title="4"><span class="kw">data</span> <span class="dt">Tree</span> a <span class="fu">=</span> <span class="dt">Leaf</span> a <span class="fu">|</span> <span class="dt">Node</span> (<span class="dt">Tree</span> a) (<span class="dt">Tree</span> a)</a></code></pre></div>
+<p>In the origami perspective, the first step is to replace the recursive reference in the type constructor with an arbitrary reference, <code>r</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" title="1"><span class="co">-- Lists:</span></a>
+<a class="sourceLine" id="cb2-2" title="2"><span class="kw">data</span> <span class="dt">List'</span> a r <span class="fu">=</span> <span class="dt">Nil'</span> <span class="fu">|</span> <span class="dt">Cons'</span> a r <span class="kw">deriving</span> <span class="dt">Show</span></a>
+<a class="sourceLine" id="cb2-3" title="3"><span class="co">-- Trees:</span></a>
+<a class="sourceLine" id="cb2-4" title="4"><span class="kw">data</span> <span class="dt">Tree'</span> a r <span class="fu">=</span> <span class="dt">Leaf'</span> a <span class="fu">|</span> <span class="dt">Node'</span> r r <span class="kw">deriving</span> <span class="dt">Show</span></a></code></pre></div>
+<p>Before proceeding, note that whenever the recursive data structure is well-defined, we can recover it as the fixed point of this new type constructor. For instance, <code>List a</code> is isomorphic to any type, <code>F a</code>, such that <code>List' a (F a) = F a</code>.</p>
+<p>Now, let’s play with the resulting bivariate type constructor abstractly. We’ll denote the abstract bivariate type constructor by <code>s a r</code>. For example,</p>
+<p><code>s a r = List' a r</code>, or</p>
+<p><code>s a r = Tree' a r</code>.</p>
+<p>To begin, we’ll assume that <code>s</code> is natural in both types. That is to say, it is a bifunctor:</p>
+<p><span class="math display">\[ s : \mathbf{Hask}\times \mathbf{Hask} \to \mathbf{Hask}\]</span></p>
+<p>For instance, <code>List'</code> and <code>Tree'</code> are recognized as bifunctors as follows:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" title="1"><span class="kw">instance</span> <span class="dt">Bifunctor</span> <span class="dt">List'</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb3-2" title="2">  bimap f g <span class="dt">Nil'</span>        <span class="fu">=</span> <span class="dt">Nil'</span></a>
+<a class="sourceLine" id="cb3-3" title="3">  bimap f g (<span class="dt">Cons'</span> x r) <span class="fu">=</span> <span class="dt">Cons'</span> (f x) (g r)</a>
+<a class="sourceLine" id="cb3-4" title="4"></a>
+<a class="sourceLine" id="cb3-5" title="5"><span class="kw">instance</span> <span class="dt">Bifunctor</span> <span class="dt">Tree'</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb3-6" title="6">  bimap f g (<span class="dt">Leaf'</span> x)       <span class="fu">=</span> <span class="dt">Leaf'</span> (f x)</a>
+<a class="sourceLine" id="cb3-7" title="7">  bimap f g (<span class="dt">Node'</span> rl rr) <span class="fu">=</span> <span class="dt">Node'</span> (g rl) (g rr)</a></code></pre></div>
+<p>Now fix the first type, <code>a</code> for a moment, and consider the category <span class="math inline">\(\mathbf{Alg}(\texttt{s a})\)</span> whose objects are functions <span class="math inline">\(\texttt{s a b} \to \texttt{b}\)</span>, and whose morphisms between objects <span class="math inline">\(\texttt{s a b} \to \texttt{b}\)</span> and <span class="math inline">\(\texttt{s a c} \to \texttt{c}\)</span> are commutative squares</p>
+<p><img src="../images/origami/morphism_square.svg" /> <!--
+$$
+\begin{tikzcd}
+  \texttt{s a b} \arrow[rr, dashed, "\texttt{second f}"] \arrow[d] & & \texttt{s a c} \arrow[d]  \\
+  \texttt{b} \arrow[rr, dashed, "\texttt{f}"] & & \texttt{c}
+\end{tikzcd}
+$$
+--></p>
+<p>Here <code>second f = bimap id f</code> applies <code>f</code> to the second type-paramter in the bifunctor <code>s</code>.</p>
+<p>For example, the objects in <span class="math inline">\(\mathbf{Alg}(\texttt{List' a})\)</span> are functions of type <code>List' a b -&gt; b</code>, which (after pattern matching) are given by an element of <code>b</code> (which <code>Nil'</code> is sent to) and a binary function <code>a -&gt; b -&gt; b</code> (matched to <code>Cons' a b</code>).</p>
+<p>Now suppose that <span class="math inline">\(\mathbf{Alg}(\texttt{s a})\)</span> has an <a href="https://en.wikipedia.org/wiki/Initial_and_terminal_objects">initial object</a> <span class="math inline">\(\texttt{s a fix} \xrightarrow{\texttt{Fix}} \texttt{fix}\)</span>. We claim that <code>fix</code> is a fixed-point of <code>s a</code>. To see this, consider the unique morphism:</p>
+<p><img src="../images/origami/lifted_square_1.svg" /> <!--
+$$
+\begin{tikzcd}
+  \texttt{s a fix} \arrow[r, dashed] \arrow[d, "\texttt{Fix}"] & \texttt{s a (s a fix)} \arrow[d, "\texttt{second Fix}"]  \\
+  \texttt{fix} \arrow[r, dashed, "\texttt{unFix}"] & \texttt{s a fix}
+\end{tikzcd}
+$$
+--> where <code>second Fix = bimap id Fix</code> is the lift of <code>Fix</code> to the functor <code>s a</code>. We claim that <code>Fix :: s a fix -&gt; fix</code> is an isomorphism. To see this, extend the diagram by adding the arrow <code>Fix :: s a fix -&gt; fix</code> at the target of <code>unFix</code>:</p>
+<p><img src="../images/origami/lifted_square_2.svg" /> <!--
+$$
+\begin{tikzcd}
+  \texttt{s a fix} \arrow[r, dashed] \arrow[d, "\texttt{Fix}"] \arrow[dr, dotted] & \texttt{s a (s a fix)} \arrow[d, "\texttt{second Fix}"]  \\
+  \texttt{fix} \arrow[r, dashed, "\texttt{unFix}"] \arrow[dr, dotted] & \texttt{s a fix} \arrow[d, "\texttt{Fix}"]\\
+& \texttt{fix}
+\end{tikzcd}
+$$
+--></p>
+<p>The composition produces a new commutative square:</p>
+<p><img src="../images/origami/lifted_square_3.svg" /> <!--
+$$
+\begin{tikzcd}
+  \texttt{s a fix} \arrow[d, "\texttt{Fix}"] \arrow[r, dotted] & \texttt{s a fix} \arrow[d, "\texttt{Fix}"]  \\
+  \texttt{fix} \arrow[ur, dashed, "\texttt{unFix}"'] \arrow[r, dotted] & \texttt{fix} 
+\end{tikzcd}
+$$
+--></p>
+<p>Since <code>Fix :: s a fix -&gt; fix</code> is an initial object, the horizontal dotted arrows are uniquely determined by the vertical arrows, and must therefore both be the identity maps. Hence <code>unFix . Fix = id</code> and <code>Fix . unFix = id</code>, as claimed.</p>
+<p>This shows that <span class="math inline">\(\texttt{s a fix} \cong \texttt{fix}\)</span> is an isomporhism. In other words, <code>fix</code> is a fixed point of <code>s a</code>, which allows us to unwind it recurively as:</p>
+<p><span class="math display">\[\texttt{fix} \cong \texttt{s a fix}\cong \texttt{s a (s a fix)}\cong \texttt{s a (s a (s a fix))}\dots\]</span></p>
+<p>For instance, the fixed point of <code>List' a</code> can be unwound to</p>
+<pre><code>Nil' | Cons' a Nil' | Cons' a (Cons' a Nil') | ...</code></pre>
+<p>that is, either an empty list, a list with one element, a list with two elements, etc.</p>
+<p>Ok, so we’ve shown that the initial object of <span class="math inline">\(\mathbf{Alg}(\texttt{s a})\)</span> is the recursive datatype we’re interested in, and we may identify it concretely as the fixed point <code>Fix s a</code> using the following construction</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" title="1"><span class="kw">newtype</span> <span class="dt">Fix</span> s a <span class="fu">=</span> <span class="dt">Fix</span> {<span class="ot">unFix ::</span> s a (<span class="dt">Fix</span> s a)}</a></code></pre></div>
+<!--
+```haskell
+-- We can show these (requires UndecidableInstances)
+instance Show (s a (Fix s a)) => Show (Fix s a) where
+    show x = "(" ++ show (unFix x) ++ ")"
+```
+-->
+<p>We can use <code>Fix</code> to define the recursive datatypes, such as lists:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" title="1"><span class="co">-- Now define the recursive datatypes:</span></a>
+<a class="sourceLine" id="cb6-2" title="2"><span class="kw">type</span> <span class="dt">ListF</span> a <span class="fu">=</span> <span class="dt">Fix</span> <span class="dt">List'</span> a</a>
+<a class="sourceLine" id="cb6-3" title="3"><span class="co">-- along with convenient (lifted) constructors:</span></a>
+<a class="sourceLine" id="cb6-4" title="4">nil' <span class="fu">=</span> <span class="dt">Fix</span> <span class="dt">Nil'</span></a>
+<a class="sourceLine" id="cb6-5" title="5"><span class="kw">infixr</span> <span class="dv">1</span> <span class="fu">#</span></a>
+<a class="sourceLine" id="cb6-6" title="6">(<span class="fu">#</span>) x y <span class="fu">=</span> <span class="dt">Fix</span> <span class="fu">$</span> <span class="dt">Cons'</span> x y</a>
+<a class="sourceLine" id="cb6-7" title="7"></a>
+<a class="sourceLine" id="cb6-8" title="8"><span class="co">-- Here's an example list: [1, 2, 3, 4]</span></a>
+<a class="sourceLine" id="cb6-9" title="9"><span class="ot">aList ::</span> <span class="dt">ListF</span> <span class="dt">Int</span></a>
+<a class="sourceLine" id="cb6-10" title="10">aList <span class="fu">=</span> <span class="dv">1</span> <span class="fu">#</span> <span class="dv">2</span> <span class="fu">#</span> <span class="dv">3</span> <span class="fu">#</span> <span class="dv">4</span> <span class="fu">#</span> nil'</a></code></pre></div>
+<p>Or trees:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" title="1"><span class="co">-- Define the recursive datatype, along with lifted constructors</span></a>
+<a class="sourceLine" id="cb7-2" title="2"><span class="kw">type</span> <span class="dt">TreeF</span> a <span class="fu">=</span> <span class="dt">Fix</span> <span class="dt">Tree'</span> a</a>
+<a class="sourceLine" id="cb7-3" title="3">leaf' <span class="fu">=</span> <span class="dt">Fix</span> <span class="fu">.</span> <span class="dt">Leaf'</span></a>
+<a class="sourceLine" id="cb7-4" title="4">node' l r <span class="fu">=</span> <span class="dt">Fix</span> <span class="fu">$</span> <span class="dt">Node'</span> l r</a>
+<a class="sourceLine" id="cb7-5" title="5"></a>
+<a class="sourceLine" id="cb7-6" title="6"><span class="co">-- Here's an example tree: </span></a>
+<a class="sourceLine" id="cb7-7" title="7"><span class="ot">aTree ::</span> <span class="dt">TreeF</span> <span class="dt">Int</span></a>
+<a class="sourceLine" id="cb7-8" title="8">aTree <span class="fu">=</span> node' (node' (leaf' <span class="dv">2</span>) (leaf' <span class="dv">4</span>)) (node' (leaf' <span class="dv">6</span>) (leaf' <span class="dv">8</span>))</a></code></pre></div>
+<p>Moreover, generic programing allows all our recursive datatypes to inherit various properties. For instance, the fact that <code>s</code> was a bifunctor implies that <code>Fix s</code> is a functor:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" title="1"><span class="kw">instance</span> <span class="dt">Bifunctor</span> s <span class="ot">=&gt;</span> <span class="dt">Functor</span> (<span class="dt">Fix</span> s) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-2" title="2">    <span class="fu">fmap</span> f x <span class="fu">=</span> <span class="dt">Fix</span>  <span class="fu">$</span> bimap f (<span class="fu">fmap</span> f) (unFix x)</a></code></pre></div>
+<p>Similarly, if <code>s</code> is bitraversable, then <code>Fix s</code> becomes traversable. <!--
+```haskell
+instance Bifoldable s => Foldable (Fix s) where
+    foldMap f x = bifoldMap f (foldMap f) (unFix x)
+
+instance Bitraversable s => Traversable (Fix s) where
+    traverse f x = Fix <$> bitraverse f (traverse f) (unFix x)
+```
+
+```haskell
+instance Bifoldable List' where
+    bifoldMap f g Nil' = mempty
+    bifoldMap f g (Cons' x r) = (f x) <> (g r)
+
+instance Bitraversable List' where
+    bitraverse f g Nil' = pure Nil'
+    bitraverse f g (Cons' x r) = Cons' <$> (f x) <*> (g r)
+```
+
+```haskell
+instance Bifoldable Tree' where
+    bifoldMap f _ (Leaf' x) = f x
+    bifoldMap _ g (Node' l r) = (g r) <> (g r)
+
+instance Bitraversable Tree' where
+    bitraverse f _ (Leaf' x) = Leaf' <$> f x
+    bitraverse _ g (Node' l r) = Node' <$> (g l) <*> (g r)
+```
+--></p>
+<p>What else does this perspective get us? We get origami: <em>folds</em> and <em>unfolds</em> (also known as catamorphisms, and anamorphisms, respectively).</p>
+<h3 id="folds">Folds:</h3>
+<p>Given a function <code>f :: s a b -&gt; b</code>, the fact <code>s a (Fix s a) -&gt; Fix s a</code> is an initial object implies that there exists a unique pair of maps:</p>
+<p><img src="../images/origami/fold_initial_object.svg" /> <!--
+$$
+\begin{tikzcd}
+  \texttt{s a (Fix s a)} \arrow[rr, dashed, "\texttt{second (gfold f)}"] \arrow[d, "Fix", shift left=1ex] &&\texttt{s a b} \arrow[d, "f"]  \\
+  \texttt{(Fix s a)} \arrow[rr, dashed, "\texttt{gfold f}"] \arrow[u, "unFix", shift left=1ex] && \texttt{b}
+\end{tikzcd}
+$$
+--></p>
+<p>The function <code>gfold f :: Fix s a -&gt; b</code> is a generalization of <code>fold</code> to all recursive data types; we can read it’s definition directly off the diagram above:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" title="1"><span class="ot">gfold ::</span> <span class="dt">Bifunctor</span> s <span class="ot">=&gt;</span> (s a b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Fix</span> s a <span class="ot">-&gt;</span> b</a>
+<a class="sourceLine" id="cb9-2" title="2">gfold f <span class="fu">=</span> f <span class="fu">.</span> second (gfold f) <span class="fu">.</span> unFix</a></code></pre></div>
+<p>Let’s look at a couple examples. First consider aggregating a monoid over our list:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" title="1"><span class="ot">aggList ::</span> <span class="dt">Monoid</span> a <span class="ot">=&gt;</span> <span class="dt">List'</span> a a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb10-2" title="2">aggList <span class="dt">Nil'</span> <span class="fu">=</span> <span class="fu">mempty</span></a>
+<a class="sourceLine" id="cb10-3" title="3">aggList (<span class="dt">Cons'</span> x r) <span class="fu">=</span> x <span class="fu">&lt;&gt;</span> r</a></code></pre></div>
+<p>This lets us add the values in our list:</p>
+<pre><code>print $ (gfold aggList) $ fmap Sum aList
+&gt;&gt; Sum {getSum = 10}</code></pre>
+<p>multiply them:</p>
+<pre><code>print $ (gfold aggList) $ fmap Product aList
+&gt;&gt; Product {getProduct = 24}</code></pre>
+<p>or convert it to a standard list:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb13-1" title="1"><span class="ot">toList ::</span> <span class="dt">ListF</span> a <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb13-2" title="2">toList <span class="fu">=</span> gfold aggList <span class="fu">.</span> <span class="fu">fmap</span> (\x <span class="ot">-&gt;</span> [x])</a></code></pre></div>
+<pre><code>print $ toList aList
+&gt;&gt; [1,2,3,4]</code></pre>
+<p>We can play the same game to aggregate monoids over trees:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb15-1" title="1"><span class="ot">aggTree ::</span> <span class="dt">Monoid</span> a <span class="ot">=&gt;</span> <span class="dt">Tree'</span> a a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb15-2" title="2">aggTree (<span class="dt">Leaf'</span> x) <span class="fu">=</span> x</a>
+<a class="sourceLine" id="cb15-3" title="3">aggTree (<span class="dt">Node'</span> l r) <span class="fu">=</span> l <span class="fu">&lt;&gt;</span> r</a></code></pre></div>
+<p>This lets us count the leaves in our tree:</p>
+<pre><code>print $ (gfold aggTree) $ fmap (\_ -&gt; Sum 1) aTree
+&gt;&gt; Sum {getSum = 10}</code></pre>
+<p>convert it to a standard list by a walking from left to right:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb17-1" title="1"><span class="ot">flatten ::</span> <span class="dt">TreeF</span> a <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb17-2" title="2">flatten <span class="fu">=</span> gfold aggTree <span class="fu">.</span> <span class="fu">fmap</span> (\x <span class="ot">-&gt;</span> [x])</a></code></pre></div>
+<pre><code>print $ flatten aTree
+&gt;&gt; [2,4,6,8]</code></pre>
+<p>or check for any odd elements:</p>
+<pre><code>isOdd x = x `mod` 2 /= 0
+print $ (gfold aggTree) $ fmap (Any . isOdd) aTree
+&gt;&gt; Any {getAny = False}</code></pre>
+<h3 id="unfolds">Unfolds:</h3>
+<p>We may also play the dual game, and consider the category <span class="math inline">\(\mathbf{CoAlg}(\texttt{s a})\)</span> whose objects are functions <span class="math inline">\(\texttt{b}\to \texttt{s a b}\)</span>, and whose morphisms between objects <span class="math inline">\(\texttt{b}\to \texttt{s a b}\)</span> and <span class="math inline">\(\texttt{c} \to \texttt{s a c}\)</span> are commutative squares</p>
+<p><img src="../images/origami/morphism_square_dual.svg" /> <!--
+$$
+\begin{tikzcd}
+  \texttt{b} \arrow[rr, dashed, "\texttt{f}"] \arrow[d] & & \texttt{c}\arrow[d] \\
+  \texttt{s a b} \arrow[rr, dashed, "\texttt{second f}"] & & \texttt{s a c} 
+\end{tikzcd}
+$$
+--></p>
+<p>By construction<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>, <code>unFix :: Fix s a -&gt; s a (Fix s a)</code> is a <a href="https://en.wikipedia.org/wiki/Initial_and_terminal_objects">terminal object</a> for <span class="math inline">\(\mathbf{CoAlg}(\texttt{s a})\)</span>. Indeed, for any function <code>g :: b -&gt; s a b</code> we may recursively construct the map</p>
+<pre><code>phi :: b -&gt; Fix s a
+phi = Fix . second phi . g</code></pre>
+<p>Since <code>Fix</code> is an inverse for <code>unFix</code>, this fits into a commutative square:</p>
+<p><img src="../images/origami/unfold_terminal_obj_phi.svg" /> <!--
+$$
+\begin{tikzcd}
+ \texttt{b} \arrow[d, "g"] \arrow[rr, dashed, "\texttt{phi}"]&& \texttt{Fix s a}  \arrow[d, "unFix", shift left=1ex] \\
+ \texttt{s a b} \arrow[rr, dashed, "\texttt{second phi}"', shift right=.5ex]  && \texttt{s a (Fix s a)}  \arrow[u, "Fix", shift left=1ex]
+\end{tikzcd}
+$$
+--></p>
+<p>Conversely, any function <code>phi</code> fitting into the commutative square above must be given by the same recursive formula<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>; which proves that <code>Fix s a</code> is terminal.</p>
+<p>Of course, <code>phi</code> depends on <code>g :: b -&gt; s a b</code>, and it makes sense to rewrite it as such:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb22-1" title="1"><span class="ot">gunfold ::</span> <span class="dt">Bifunctor</span> s <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> s a b) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Fix</span> s a</a>
+<a class="sourceLine" id="cb22-2" title="2">gunfold g <span class="fu">=</span> <span class="dt">Fix</span> <span class="fu">.</span> second (gunfold g) <span class="fu">.</span> g</a></code></pre></div>
+<!--
+![](../images/origami/unfold_terminal_object.svg)
+$$
+\begin{tikzcd}
+ \texttt{b} \arrow[d, "g"] \arrow[rr, dashed, "\texttt{gunfold g}"]&& \texttt{Fix s a}  \arrow[d, "unFix", shift left=1ex] \\
+ \texttt{s a b} \arrow[rr, dashed, "\texttt{second (gunfold g)}"', shift right=.5ex]  && \texttt{s a (Fix s a)}  \arrow[u, "Fix", shift left=1ex]
+\end{tikzcd}
+$$
+-->
+<p>The function <code>gunfold g :: b -&gt; Fix s a</code> allows us to <em>unfold</em> an instance of <code>b</code> into an instance of the recursive datatype <code>Fix s a</code>.</p>
+<p>Let’s look at a couple examples:</p>
+<p>As a simple example, consider decomposing an integer into its digits (in ascending order):</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb23-1" title="1"><span class="co">-- Our iterative step just peels off the smallest digit:</span></a>
+<a class="sourceLine" id="cb23-2" title="2"><span class="ot">onesAndTens ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">List'</span> <span class="dt">Int</span> <span class="dt">Int</span></a>
+<a class="sourceLine" id="cb23-3" title="3">onesAndTens x <span class="fu">=</span> <span class="kw">if</span> x <span class="fu">&lt;=</span> <span class="dv">0</span> <span class="kw">then</span> <span class="dt">Nil'</span> <span class="kw">else</span> <span class="dt">Cons'</span> (x <span class="ot">`mod`</span> <span class="dv">10</span>) (x <span class="ot">`div`</span> <span class="dv">10</span>)</a>
+<a class="sourceLine" id="cb23-4" title="4"></a>
+<a class="sourceLine" id="cb23-5" title="5"><span class="co">-- The full function just iterates:</span></a>
+<a class="sourceLine" id="cb23-6" title="6">digits <span class="fu">=</span> gunfold onesAndTens</a></code></pre></div>
+<pre><code>digits 52341
+&gt;&gt; 1 # 4 # 3 # 2 # 5 # nil'</code></pre>
+<p>In general, unfolds for <code>List'</code> are “generators”: they are described by a state type <code>b</code>, together with a map <code>next :: b -&gt; List' a b</code> which returns either <code>Nil'</code> (terminate the list), or the pair <code>Cons' a b</code> (produce the next list element of type <code>a</code> along with the next state of type <code>b</code>). The function <code>gunfold next :: b -&gt; ListF a</code> iteratively generates the corresponding list given an initial state.</p>
+<p>For instance to (inefficiently) list the prime numbers, we can use <a href="https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes">Eratosthene’s sieve</a>, where <code>b = [Int]</code> describes the state of the sieve. At each stage, we peel off the smallest element of the sieve (which is prime), and update the sieve by filtering for those elements which are coprime to that prime:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb25-1" title="1"><span class="ot">nextPrime ::</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">List'</span> <span class="dt">Int</span> [<span class="dt">Int</span>]</a>
+<a class="sourceLine" id="cb25-2" title="2">nextPrime (prime<span class="fu">:</span>sieve) <span class="fu">=</span> <span class="dt">Cons'</span> prime (<span class="fu">filter</span> (coPrimeTo prime) sieve) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb25-3" title="3">  coPrimeTo n <span class="fu">=</span> (<span class="fu">/=</span> <span class="dv">0</span>) <span class="fu">.</span> <span class="fu">mod</span> n</a>
+<a class="sourceLine" id="cb25-4" title="4"></a>
+<a class="sourceLine" id="cb25-5" title="5">primes <span class="fu">=</span> gunfold nextPrime [<span class="dv">2</span><span class="fu">..</span>] </a></code></pre></div>
+<pre><code>primes
+&gt;&gt; 2 # 3 # 5 # 7 # 11 # 13 # 17 # ...</code></pre>
+<p>We can also <em>unfold</em> values into trees. For instance, suppose we want to factorize an integer. Let</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb27-1" title="1"><span class="ot">factorPair ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Integer</span>, <span class="dt">Integer</span>)</a></code></pre></div>
+<!--
+```haskell
+maybeHead :: [a] -> Maybe a
+maybeHead (x:xs) = Just x
+maybeHead _ = Nothing
+
+isSquare :: (Integral a) => a -> Bool
+isSquare n = (round . sqrt $ fromIntegral n) ^ 2 == n
+
+squareRoot :: Integer -> Integer
+squareRoot = floor . sqrt . (fromIntegral :: Integer -> Double)
+
+factorPair 1 = Nothing
+factorPair 2 = Nothing
+factorPair x = if x `mod` 2 == 0 then Just (2, x `div` 2) else maybeHead $ 
+    filter ((>1) . fst) $
+    map (\(a2, b) -> let a = squareRoot a2 in (a-b, a+b)) $
+    filter (isSquare . fst) 
+    [(x+b*b, b) | b<-[0,1.. squareRoot x]]
+```
+-->
+<p>Be a function which decomposes a composite integer into Just a pair of factors or Nothing for a prime. Then we can <em>unfold</em> an integer into a factor tree:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb28-1" title="1">factorTree <span class="fu">=</span> gunfold f <span class="kw">where</span></a>
+<a class="sourceLine" id="cb28-2" title="2">    f b <span class="fu">=</span> <span class="kw">case</span> factorPair b <span class="kw">of</span></a>
+<a class="sourceLine" id="cb28-3" title="3">        <span class="dt">Nothing</span> <span class="ot">-&gt;</span> <span class="dt">Leaf'</span> b</a>
+<a class="sourceLine" id="cb28-4" title="4">        (<span class="dt">Just</span> (x, y)) <span class="ot">-&gt;</span> <span class="dt">Node'</span> x y</a></code></pre></div>
+<pre><code>print $ factorTree 60
+&gt;&gt; Node' (Leaf' 2) (Node' (Leaf' 2) (Node' (Leaf' 3) (Leaf' 5)))</code></pre>
+<h3 id="visualizing-sorts">Visualizing Sorts</h3>
+<p>Many sorting algorithms involve a computational tree, which we can explicitly instantiate and visualize by decomposing the algorithms as</p>
+<p><span class="math display">\[\texttt{List} \xrightarrow{\texttt{gunfold}} \texttt{Tree} \xrightarrow{\texttt{gfold}} \texttt{List}\]</span></p>
+<h4 id="merge-sort">Merge Sort</h4>
+<p>Consider <a href="https://en.wikipedia.org/wiki/Merge_sort">merge sort</a>. Starting with the tree structure:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb30-1" title="1"><span class="kw">data</span> <span class="dt">MTree'</span> a r <span class="fu">=</span> <span class="dt">MEmpty</span> <span class="fu">|</span> <span class="dt">MLeaf</span> a <span class="fu">|</span> <span class="dt">MNode</span> r r <span class="kw">deriving</span> <span class="dt">Show</span></a>
+<a class="sourceLine" id="cb30-2" title="2"><span class="kw">type</span> <span class="dt">MTreeF</span> a <span class="fu">=</span> <span class="dt">Fix</span> <span class="dt">MTree'</span> a</a>
+<a class="sourceLine" id="cb30-3" title="3"></a>
+<a class="sourceLine" id="cb30-4" title="4"><span class="co">-- Describe the bifunctor structure:</span></a>
+<a class="sourceLine" id="cb30-5" title="5"><span class="kw">instance</span> <span class="dt">Bifunctor</span> <span class="dt">MTree'</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb30-6" title="6">  bimap _ _ <span class="dt">MEmpty</span> <span class="fu">=</span> <span class="dt">MEmpty</span></a>
+<a class="sourceLine" id="cb30-7" title="7">  bimap f _ (<span class="dt">MLeaf</span> x) <span class="fu">=</span> <span class="dt">MLeaf</span> (f x)</a>
+<a class="sourceLine" id="cb30-8" title="8">  bimap _ g (<span class="dt">MNode</span> l r) <span class="fu">=</span> <span class="dt">MNode</span> (g l) (g r)</a></code></pre></div>
+<p>Merge sort starts by successively splitting a list:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb31-1" title="1"><span class="ot">split ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">MTree'</span> a [a]</a>
+<a class="sourceLine" id="cb31-2" title="2">split [] <span class="fu">=</span> <span class="dt">MEmpty</span></a>
+<a class="sourceLine" id="cb31-3" title="3">split [x] <span class="fu">=</span> <span class="dt">MLeaf</span> x</a>
+<a class="sourceLine" id="cb31-4" title="4">split xs <span class="fu">=</span> <span class="dt">MNode</span> (<span class="fu">take</span> n xs) (<span class="fu">drop</span> n xs) <span class="kw">where</span> n <span class="fu">=</span> <span class="fu">length</span> xs <span class="ot">`div`</span> <span class="dv">2</span></a></code></pre></div>
+<p>and then successively merging the pieces together in ascending order:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb32-1" title="1"><span class="ot">merge ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">MTree'</span> a [a] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb32-2" title="2">merge <span class="dt">MEmpty</span> <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb32-3" title="3">merge (<span class="dt">MLeaf</span> x) <span class="fu">=</span> [x]</a>
+<a class="sourceLine" id="cb32-4" title="4">merge (<span class="dt">MNode</span> xs []) <span class="fu">=</span> xs</a>
+<a class="sourceLine" id="cb32-5" title="5">merge (<span class="dt">MNode</span> [] ys) <span class="fu">=</span> ys</a>
+<a class="sourceLine" id="cb32-6" title="6">merge (<span class="dt">MNode</span> (x<span class="fu">:</span>xs) (y<span class="fu">:</span>ys)) <span class="fu">=</span> <span class="kw">if</span> x <span class="fu">&lt;=</span> y <span class="kw">then</span> x<span class="fu">:</span>merge (<span class="dt">MNode</span> xs (y<span class="fu">:</span>ys)) <span class="kw">else</span> y<span class="fu">:</span>merge (<span class="dt">MNode</span> (x<span class="fu">:</span>xs) ys)</a></code></pre></div>
+<p>The full merge sort is just the composite:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb33-1" title="1"><span class="ot">mSort ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb33-2" title="2">mSort <span class="fu">=</span> gfold merge <span class="fu">.</span> gunfold split</a></code></pre></div>
+<pre><code>print $ mSort [3,5,2,1,-4,6]
+&gt;&gt; [-4,1,2,3,5,6]</code></pre>
+<p>Using the <a href="https://hackage.haskell.org/package/graphviz-2999.20.0.4/docs/Data-GraphViz.html">GraphViz package</a>, one may programatically convert the intermediate <code>QTreeF</code>’s into graphs, allowing us to visualize the computation:</p>
+<p><img src="../images/origami/mTree.png" /></p>
+<h4 id="quick-sort">Quick Sort</h4>
+<p><a href="https://en.wikipedia.org/wiki/Quicksort">Quick sort</a> also involves a computational tree: at each stage one</p>
+<ol type="1">
+<li>arbitrarily chooses an element of the list on which to <em>pivot</em>, and</li>
+<li>moves all elements smaller than the pivot the the left of the pivot,</li>
+<li>moves all elements larger than the pivot to the right of the pivot.</li>
+<li>Repeats this process on both the sublist to the left of the pivot and the sublist to the right of the pivot.</li>
+</ol>
+<p>The computation involves the following tree structure:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb35-1" title="1"><span class="kw">data</span> <span class="dt">QTree'</span> a r <span class="fu">=</span> <span class="dt">QEmpty</span> <span class="fu">|</span> <span class="dt">QLeaf</span> a <span class="fu">|</span> <span class="dt">QNode</span> a r r</a>
+<a class="sourceLine" id="cb35-2" title="2"><span class="kw">type</span> <span class="dt">QTreeF</span> a <span class="fu">=</span> <span class="dt">Fix</span> <span class="dt">QTree'</span> a</a>
+<a class="sourceLine" id="cb35-3" title="3"></a>
+<a class="sourceLine" id="cb35-4" title="4"><span class="co">-- Describe the bifunctor structure:</span></a>
+<a class="sourceLine" id="cb35-5" title="5"><span class="kw">instance</span> <span class="dt">Bifunctor</span> <span class="dt">QTree'</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb35-6" title="6">  bimap _ _ <span class="dt">QEmpty</span> <span class="fu">=</span> <span class="dt">QEmpty</span></a>
+<a class="sourceLine" id="cb35-7" title="7">  bimap f _ (<span class="dt">QLeaf</span> x) <span class="fu">=</span> <span class="dt">QLeaf</span> (f x)</a>
+<a class="sourceLine" id="cb35-8" title="8">  bimap f g (<span class="dt">QNode</span> x l r) <span class="fu">=</span> <span class="dt">QNode</span> (f x) (g l) (g r)</a>
+<a class="sourceLine" id="cb35-9" title="9"></a>
+<a class="sourceLine" id="cb35-10" title="10"><span class="co">-- A custom show method:</span></a>
+<a class="sourceLine" id="cb35-11" title="11"><span class="kw">instance</span> (<span class="dt">Show</span> a, <span class="dt">Show</span> r) <span class="ot">=&gt;</span> <span class="dt">Show</span> (<span class="dt">QTree'</span> a r) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb35-12" title="12">    <span class="fu">show</span> (<span class="dt">QLeaf</span> x) <span class="fu">=</span> <span class="fu">show</span> x</a>
+<a class="sourceLine" id="cb35-13" title="13">    <span class="fu">show</span> (<span class="dt">QNode</span> x l r) <span class="fu">=</span> <span class="fu">show</span> l <span class="fu">++</span> <span class="st">&quot; pivot: &quot;</span> <span class="fu">++</span> <span class="fu">show</span> x <span class="fu">++</span> <span class="st">&quot; &quot;</span> <span class="fu">++</span> <span class="fu">show</span> r </a>
+<a class="sourceLine" id="cb35-14" title="14">    <span class="fu">show</span> _ <span class="fu">=</span> <span class="st">&quot;&quot;</span></a></code></pre></div>
+<p>Pivoting (about the first element) can be described as follows:</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb36-1" title="1"><span class="ot">pivot ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">QTree'</span> a [a]</a>
+<a class="sourceLine" id="cb36-2" title="2">pivot [] <span class="fu">=</span> <span class="dt">QEmpty</span></a>
+<a class="sourceLine" id="cb36-3" title="3">pivot [x] <span class="fu">=</span> <span class="dt">QLeaf</span> x</a>
+<a class="sourceLine" id="cb36-4" title="4">pivot (x<span class="fu">:</span>xs) <span class="fu">=</span> <span class="dt">QNode</span> x (<span class="fu">filter</span> (<span class="fu">&lt;</span>x) xs) (<span class="fu">filter</span> (<span class="fu">&gt;=</span>x) xs)</a></code></pre></div>
+<p>After unfolding a list via <code>pivot</code>, the leaves are ordered:</p>
+<pre><code>print $ gunfold pivot [3,5,2,1,-4,6]
+&gt;&gt; ((((-4) pivot: 1 ()) pivot: 2 ()) pivot: 3 (() pivot: 5 (6)))</code></pre>
+<p>So we have nothing left to do except walk the tree from left to right:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb38-1" title="1"><span class="ot">walk ::</span> <span class="dt">QTree'</span> a [a] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb38-2" title="2">walk (<span class="dt">QLeaf</span> x) <span class="fu">=</span> [x]</a>
+<a class="sourceLine" id="cb38-3" title="3">walk (<span class="dt">QNode</span> x l r) <span class="fu">=</span> l <span class="fu">++</span> x<span class="fu">:</span>r</a>
+<a class="sourceLine" id="cb38-4" title="4">walk _ <span class="fu">=</span> []</a></code></pre></div>
+<p>The full quick-sort is just the composite:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb39-1" title="1"><span class="ot">qSort ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb39-2" title="2">qSort <span class="fu">=</span> gfold walk <span class="fu">.</span> gunfold pivot</a></code></pre></div>
+<pre><code>print $ qSort [3,5,2,1,-4,6]
+&gt;&gt; [-4,1,2,3,5,6]</code></pre>
+<p>Once again, we can programatically visualize the computational tree using the <a href="https://hackage.haskell.org/package/graphviz-2999.20.0.4/docs/Data-GraphViz.html">GraphViz package</a> package:</p>
+<p><img src="../images/origami/qTree.png" /></p>
+<section class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>One needs to make a few additional assumptions for this to prove that <code>unFix :: Fix s a -&gt; s a (Fix s a)</code> is terminal, namely that functions to <span class="math display">\[\texttt{Fix s a}\cong\texttt{s a (Fix s a)}\cong \texttt{s a (s a (Fix s a))}\cong \cdots\]</span> can be defined recursively.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>This statement is a tautology, since the diagram and the recursive formula are equivalent - assuming functions to <code>Fix s a</code> can be defined recursively. Said differently, the statement that <code>unFix :: Fix s a -&gt; s a (Fix s a)</code> is terminal is equivalent to</p>
+<pre><code>gunfold :: Bifunctor s =&gt; (b -&gt; s a b) -&gt; b -&gt; Fix s a
+gunfold g = Fix . second (gunfold g) . g</code></pre>
+<p>being a well defined map.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+</ol>
+</section>
+
+<div id="disqus_thread"></div>
+<script>
+
+    /**
+     *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+     *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+    var disqus_config = function () {
+    this.page.url = "https://davidlibland.github.io/posts/2020-06-16-origami-and-visualizing-sorts.html";
+    // Replace PAGE_URL with your page's canonical URL variable
+    this.page.identifier = "Visualizing Sorts Through Origami";
+    // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+    };
+    (function() { // DON'T EDIT BELOW THIS LINE
+        var d = document, s = d.createElement('script');
+        s.src = 'https://davidlibland-blog.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<script id="dsq-count-scr" src="//davidlibland-blog.disqus.com/count.js" async></script>
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+        <!-- Default Statcounter code for davidlibland.github.io
+    http://davidlibland.github.io -->
+        <script type="text/javascript">
+            var sc_project=11892418;
+            var sc_invisible=0;
+            var sc_security="03f7701a";
+            var scJsHost = (("https:" == document.location.protocol) ?
+                "https://secure." : "http://www.");
+            document.write("<sc"+"ript type='text/javascript' src='" +
+                scJsHost+
+                "statcounter.com/counter/counter.js'></"+"script>");
+        </script>
+        <noscript><div class="statcounter right"><a title="Web Analytics" href="http://statcounter.com/" target="_blank"><img class="statcounter right" src="//c.statcounter.com/11892418/0/03f7701a/0/" alt="Web
+Analytics"></a></div></noscript>
+        <!-- End of Statcounter Code -->
+    </body>
+</html>
