@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <link rel="shortcut icon" href="../favicon.ico">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>David Li-Bland's Blog - Hard vs Soft Clipping</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">David Li-Bland's Blog</a>
+            </div>
+            <div id="navigation">
+                <a href="../">Home</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../archive.html">Archive</a>
+                <a href="https://math.berkeley.edu/~libland/papers.php">Papers</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Hard vs Soft Clipping</h1>
+
+            <div class="info">
+    Posted on August 30, 2020
+    
+</div>
+
+<p>In this post, we explore the difference between hard and soft clipping overdrive circuits.</p>
+<h1 id="hard-clipping-or-shunt-clipping">Hard clipping (or shunt-clipping)</h1>
+<p>Hard clipping is found in a variety of popular over-drive pedals, including the ProCo Rat, MXR Distortion+, Boss DS-1&amp;2, and the Klon Centaur. A hard clipping circuit introduces a double-diode shunt to ground after the op-amp gain stage, as follows:</p>
+<p><img src="../images/clipping/hard_clipping.png" /></p>
+<p>Imagine the (amplified) input signal is <span class="math inline">\(V_I\)</span>, and we probe the voltage <span class="math inline">\(V_O\)</span>. In particular, we assume that the impedance at the output probe is much much higher than the resistance through any other part of the circuit.</p>
+<p>Following <a href="https://en.wikipedia.org/wiki/Shockley_diode_equation">Shockley’s equation</a>, the current through the double-diode shunt is</p>
+<p><span class="math display">\[I_{\operatorname{shunt}}(V_O)=I_S\big(e^{\frac{V_O}{K}}-e^{\frac{-V_O}{K}}\big),\]</span></p>
+<p>Where <span class="math inline">\(I_S\)</span> is the reverse bias saturation current, <span class="math inline">\(K=nV_T\)</span>, where <span class="math inline">\(V_T\)</span> is the thermal voltage, and <span class="math inline">\(n\)</span> is the ideality factor of the diode. This must match the current through the resistor, so</p>
+<p><span class="math display">\[\frac{V_I-V_O}{R_1} = I_S\big(e^\frac{V_O}{K}-e^\frac{-V_O}{K}\big)\]</span></p>
+<p>Thus, we get</p>
+<p><span class="math display">\[V_I = R_1I_S\big(e^\frac{V_O}{K}-e^\frac{-V_O}{K}\big)+V_O.\]</span></p>
+<p>Letting</p>
+<p><span class="math display">\[f(V_O) = f_{R_1,I_S,K}(V_O):=R_1I_S\big(e^\frac{V_O}{K}-e^\frac{-V_O}{K}\big)+V_O,\]</span></p>
+<p>we see that</p>
+<p><span class="math display">\[V_O = f^{-1}(V_I).\]</span></p>
+<p>When <span class="math inline">\(R_1\)</span> represents a 1k transistor, and for silicon diodes, <span class="math inline">\(V_O\)</span> depends on <span class="math inline">\(V_I\)</span> as:</p>
+<p><img src="../images/clipping/hard_clipping_graph_sm.png" /></p>
+<p>For large values of <span class="math inline">\(V_I\)</span>, we have approximately <span class="math inline">\(V_O\cong K\log(V_I),\)</span> which flattens out very quickly (i.e. clips hard).</p>
+<p>Passing a sine-wave (at different gain levels) through this shunt-clipping circuit results in the following clipped signal:</p>
+<p><img src="../images/clipping/hard_clipped_signal.png" /></p>
+<h1 id="soft-clipping-or-feedback-clipping">Soft clipping (or feedback-clipping)</h1>
+<p>Soft clipping is a second common clipping method for overdrive pedals, and is used in the Tube-Screamer, the Boss OD-1, and the Timmy, to name a few. It introduces a double-diode shunt in the feedback loop of the gain stage:</p>
+<p><img src="../images/clipping/soft_clipping.png" /></p>
+<p>We make a few simplifying assumptions: - The op amp operates in linear (i.e., not saturated) mode, so the difference in voltage between the non-inverting (+) pin and the inverting (−) pin is negligibly small. In particular, the voltage at the (-) pin is approximately <span class="math inline">\(V_I\)</span>. - The input impedance through the non-inverting pin is much larger than any other resistance in the circuit.</p>
+<p>Then the current through <span class="math inline">\(R_2\)</span> to the ground must be <span class="math inline">\(V_I/R_2\)</span>, and this must match the combined current through both the diodes and <span class="math inline">\(R_1\)</span>. That is,</p>
+<p><span class="math display">\[\frac{V_I}{R_2} =I_S\big(e^{\frac{V_O-V_I}{K}}-e^{\frac{V_I-V_O}{K}}\big) + \frac{V_O-V_I}{R_1},\]</span></p>
+<p>where we model the diodes via <a href="https://en.wikipedia.org/wiki/Shockley_diode_equation">Shockley’s equation</a>. Rearranging terms, we get:</p>
+<p><span class="math display">\[V_I\frac{R_1}{R_2} =R_1I_S\big(e^{\frac{V_O-V_I}{K}}-e^{\frac{V_I-V_O}{K}}\big) + (V_O-V_I),\]</span></p>
+<p>That is,</p>
+<p><span class="math display">\[V_I\frac{R_1}{R_2} = f_{R_1,I_S,K}(V_O-V_I).\]</span></p>
+<p>Solving for <span class="math inline">\(V_O\)</span>, we get</p>
+<p><span class="math display">\[V_O = f_{R_1,I_S,K}^{-1}\big(V_I\frac{R_1}{R_2}\big)+V_I.\]</span></p>
+<p>In the special case that <span class="math inline">\(R_1=R_2\)</span>, this matches the hard-clipping function, except for the addition of the extra <span class="math inline">\(V_I\)</span> summand, which softens the clipping:</p>
+<p><span class="math display">\[V_O = \overset{\text{hard-clipping term}}{\overbrace{f^{-1}(V_I)}}+\overset{\text{softening term}}{\overbrace{V_I}}.\]</span></p>
+<p>However, the gain when <span class="math inline">\(R_1=R_2\)</span> just doubles the input voltage, and very little clipping occurs. However, choosing <span class="math inline">\(R_1=5\)</span> and <span class="math inline">\(R_2=.1\)</span> with silicon diodes, <span class="math inline">\(V_O\)</span> depends on <span class="math inline">\(V_I\)</span> as:</p>
+<p><img src="../images/clipping/soft_clipping_graph.png" /></p>
+<p>Note that this curve still grows steadily for all values of <span class="math inline">\(V_I\)</span>. More precisely, for very large values of <span class="math inline">\(V_I\)</span>, we have <span class="math inline">\(V_O\cong V_I\)</span>. To summarize, signals are amplified on the order of <span class="math inline">\(1+\frac{R1}{R2}\)</span> until they reach a certain “clipping” threshold at which point they grow slowly but linearly - rather than fully flattening out.</p>
+<p>Passing a sine-wave (at different gain levels) through this shunt-clipping circuit results in the following clipped signal:</p>
+<p><img src="../images/clipping/soft_clipped_signal.png" /></p>
+<p>These signals are clipped far more softly, remaining more sinusoidal than the hard clipped ones.</p>
+
+<div id="disqus_thread"></div>
+<script>
+
+    /**
+     *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+     *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+    var disqus_config = function () {
+    this.page.url = "https://davidlibland.github.io/posts/2020-08-30-hard-vs-soft-clipping.html";
+    // Replace PAGE_URL with your page's canonical URL variable
+    this.page.identifier = "Hard vs Soft Clipping";
+    // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+    };
+    (function() { // DON'T EDIT BELOW THIS LINE
+        var d = document, s = d.createElement('script');
+        s.src = 'https://davidlibland-blog.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<script id="dsq-count-scr" src="//davidlibland-blog.disqus.com/count.js" async></script>
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+        <!-- Default Statcounter code for davidlibland.github.io
+    http://davidlibland.github.io -->
+        <script type="text/javascript">
+            var sc_project=11892418;
+            var sc_invisible=0;
+            var sc_security="03f7701a";
+            var scJsHost = (("https:" == document.location.protocol) ?
+                "https://secure." : "http://www.");
+            document.write("<sc"+"ript type='text/javascript' src='" +
+                scJsHost+
+                "statcounter.com/counter/counter.js'></"+"script>");
+        </script>
+        <noscript><div class="statcounter right"><a title="Web Analytics" href="http://statcounter.com/" target="_blank"><img class="statcounter right" src="//c.statcounter.com/11892418/0/03f7701a/0/" alt="Web
+Analytics"></a></div></noscript>
+        <!-- End of Statcounter Code -->
+    </body>
+</html>
